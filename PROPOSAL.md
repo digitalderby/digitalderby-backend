@@ -1,6 +1,7 @@
 # Proposal
 
 ## Team Name & Project Name
+The Mane Event - Digital Derby
 
 ## Project Description
 
