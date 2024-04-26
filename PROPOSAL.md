@@ -85,27 +85,27 @@ A horse race betting application that offers users the thrill of wagering on hor
 
 ## TIMELINE TABLE
 ### Backend
-| Day | Task | A | F | L | W |
-|---|---|---|---|---|---|
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
+| Day       | Task        | A | F | L | W |
+|---------  |------       |---|---|---|---|
+|Saturday   |             |   |   |   |   |
+|Sunday     |             |   |   |   |   |
+|Monday     |             |   |   |   |   |
+|Tuesday    |             |   |   |   |   |
+|Wednesday  |             |   |   |   |   |
+|Thursday   |             |   |   |   |   |
+|Friday     |             |   |   |   |   |
+|Saturday   |             |   |   |   |   |
+|Sunday     |             |   |   |   |   |
 
 ### Frontend
-| Day | Task | A | F | L | W |
-|---|---|---|---|---|---|
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
-|   |   |   |   |   |   |
+| Day       | Task        | A | F | L | W |
+|---------  |------       |---|---|---|---|
+|Saturday   |             |   |   |   |   |
+|Sunday     |             |   |   |   |   |
+|Monday     |             |   |   |   |   |
+|Tuesday    |             |   |   |   |   |
+|Wednesday  |             |   |   |   |   |
+|Thursday   |             |   |   |   |   |
+|Friday     |             |   |   |   |   |
+|Saturday   |             |   |   |   |   |
+|Sunday     |             |   |   |   |   |
