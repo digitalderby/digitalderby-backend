@@ -4,6 +4,7 @@
 The Mane Event - Digital Derby
 
 ## Project Description
+A horse race betting application that offers users the thrill of wagering on horses.  The user can create a personalized profile to track their funds, bet on races and see the races in real time.
 
 ## User Stories
 
@@ -47,6 +48,10 @@ The Mane Event - Digital Derby
 ![image](https://github.com/digitalderby/digitalderby-backend/assets/20966518/2ecd0ffb-309d-4c65-bd8a-a956d3ecb4ba)
 
 ## Team Responsibilities
+- Will F: Backend, GitHub Manager
+- Fergus: Frontend
+- Adonis: Frontend - Backend integration
+- Lando: Project Manager / Scrum Master, Documenter
 
 ## Project Management
 
