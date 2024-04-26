@@ -60,7 +60,7 @@ A horse race betting application that offers users the thrill of wagering on hor
 
 ## ERD
 
-![image](https://github.com/digitalderby/digitalderby-backend/assets/20966518/2ecd0ffb-309d-4c65-bd8a-a956d3ecb4ba)
+![image](https://github.com/digitalderby/digitalderby-backend/assets/20966518/6eecccdf-8de3-43fb-b3c3-fc43acc25773)
 
 ## Team Responsibilities
 - Will F: Backend, GitHub Manager
