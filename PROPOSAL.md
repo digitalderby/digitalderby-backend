@@ -55,7 +55,8 @@ A horse race betting application that offers users the thrill of wagering on hor
 <img width="1498" alt="User Profile Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/8de65bc1-419d-40e3-abb4-1de8dd9877e0">
 
 ## Component Hierarchy
-<img width="1543" alt="Screenshot 2024-04-26 at 3 18 22 PM" src="https://github.com/digitalderby/digitalderby-backend/assets/156877357/e310d404-c79a-462a-9bf7-fbaee01455e8">
+
+<img width="1371" alt="Screenshot 2024-04-26 at 5 05 19 PM" src="https://github.com/digitalderby/digitalderby-backend/assets/156877357/cd5cfe06-e821-4585-a4e7-3bf22e2b5406">
 
 
 ## ERD
