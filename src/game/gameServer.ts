@@ -2,7 +2,7 @@ import { Server as HTTPServer } from 'node:http'
 import { Socket, Server as SocketIOServer } from "socket.io"
 import { ClientInfo } from "../clientInfo.js"
 import { GameDatabase } from "./gameDatabase.js"
-import { hrTimeMs } from "../time.js"
+import { hrTimeMs } from "../time/time.js"
 import { Race } from './race.js'
 import { RaceState } from './raceState.js'
 
