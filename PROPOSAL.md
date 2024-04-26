@@ -32,12 +32,22 @@ A horse race betting application that offers users the thrill of wagering on hor
 - As a user, I want to be able to see the amount of times a user has gone bankrupt: to track my own financial history and learn from past mistakes.
 
 ## Wireframes
-<img width="1485" alt="Landing Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/f6e8524c-624a-409c-8cf7-19809e893623">
+### Landing Page
+<img width="1252" alt="Screenshot 2024-04-26 at 4 08 40 PM" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/3651d51c-1989-452e-8950-ca2bca30fab2">
+
+### - Race Page -
+#### Betting Mode
 <img width="1472" alt="Betting" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/987ddce3-8640-4e38-b514-d1684edceef8">
+#### Race Mode
 <img width="1486" alt="Races Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/46e7a7a2-ce65-4c16-ade2-9534b7776ead">
+#### Results Mode
 <img width="1482" alt="Results Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/b34d7342-308d-4934-8c0d-300ddb0b5e7c">
+
+### Horse Details Page
 <img width="1441" alt="Horse Details" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/38c7407a-ca59-4978-ab0d-aabf333a5e0d">
+### Login / Register Page
 <img width="1493" alt="Login Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/72fc2e11-77fa-44c8-9024-fd3825b0b752">
+### Profile Page
 <img width="1498" alt="User Profile Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/8de65bc1-419d-40e3-abb4-1de8dd9877e0">
 
 ## Component Hierarchy
