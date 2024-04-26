@@ -31,6 +31,13 @@ The Mane Event - Digital Derby
 - As a user, I want to be able to see the amount of times a user has gone bankrupt: to track my own financial history and learn from past mistakes.
 
 ## Wireframes
+<img width="1485" alt="Landing Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/f6e8524c-624a-409c-8cf7-19809e893623">
+<img width="1472" alt="Betting" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/987ddce3-8640-4e38-b514-d1684edceef8">
+<img width="1486" alt="Races Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/46e7a7a2-ce65-4c16-ade2-9534b7776ead">
+<img width="1482" alt="Results Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/b34d7342-308d-4934-8c0d-300ddb0b5e7c">
+<img width="1441" alt="Horse Details" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/38c7407a-ca59-4978-ab0d-aabf333a5e0d">
+<img width="1493" alt="Login Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/72fc2e11-77fa-44c8-9024-fd3825b0b752">
+<img width="1498" alt="User Profile Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/8de65bc1-419d-40e3-abb4-1de8dd9877e0">
 
 ## Component Hierarchy
 <img width="1543" alt="Screenshot 2024-04-26 at 9 13 04 AM" src="https://github.com/digitalderby/digitalderby-backend/assets/156877357/35c9e986-6a9c-458f-8dcd-b115b25554d3">
