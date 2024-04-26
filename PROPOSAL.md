@@ -80,3 +80,30 @@ A horse race betting application that offers users the thrill of wagering on hor
 - Saturday (4th): CSS styling.  Applying ice box if applicable.
 - Sunday (5th): Debugging, testing and polishing the project.
 - Monday (6th): Presentation
+
+## TIMELINE TABLE
+### Backend
+| Day | Task | A | F | L | W |
+|---|---|---|---|---|---|
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+
+### Frontend
+| Day | Task | A | F | L | W |
+|---|---|---|---|---|---|
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
+|   |   |   |   |   |   |
