@@ -17,6 +17,8 @@
 
 ## ERD
 
+![image](https://github.com/digitalderby/digitalderby-backend/assets/20966518/2ecd0ffb-309d-4c65-bd8a-a956d3ecb4ba)
+
 ## Team Responsibilities
 
 ## Project Management
