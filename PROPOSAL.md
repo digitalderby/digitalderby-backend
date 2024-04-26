@@ -50,8 +50,8 @@ A horse race betting application that offers users the thrill of wagering on hor
 ## Team Responsibilities
 - Will F: Backend, GitHub Manager
 - Fergus: Frontend
-- Adonis: Frontend - Backend Integration
-- Lando: Project Manager / Scrum Master, Documenter
+- Adonis: Frontend, Frontend - Backend Integration
+- Lando: Project Manager / Scrum Master, Documenter, Backend
 
 ## Project Management
 
