@@ -38,8 +38,10 @@ A horse race betting application that offers users the thrill of wagering on hor
 ### - Race Page -
 #### Betting Mode
 <img width="1472" alt="Betting" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/987ddce3-8640-4e38-b514-d1684edceef8">
+
 #### Race Mode
 <img width="1486" alt="Races Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/46e7a7a2-ce65-4c16-ade2-9534b7776ead">
+
 #### Results Mode
 <img width="1482" alt="Results Page" src="https://github.com/digitalderby/digitalderby-backend/assets/109927274/b34d7342-308d-4934-8c0d-300ddb0b5e7c">
 
