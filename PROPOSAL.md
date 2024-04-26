@@ -50,9 +50,17 @@ A horse race betting application that offers users the thrill of wagering on hor
 ## Team Responsibilities
 - Will F: Backend, GitHub Manager
 - Fergus: Frontend
-- Adonis: Frontend - Backend integration
+- Adonis: Frontend - Backend Integration
 - Lando: Project Manager / Scrum Master, Documenter
 
 ## Project Management
 
 ## Timeline
+- Monday (29th): Establish a socket connnections between the frontend and backend.  Incorporate authorization.  Creating the schemas.
+- Tuesday (30th): Creating the race page.  Incorporating the horse game logic and simulations.  Creating all of the routes / endpoints.  
+- Wednesday (1st): Creating the user account and sign in. Applying CRUD operations.  Designing the navigation bar.
+- Thursday (2nd): Deploy the frontend and backend.  Design the win/lose logic.
+- Friday (3rd): Creating the UI from the wireframes
+- Saturday (4th): CSS styling.  Applying ice box if applicable.
+- Sunday (5th): Debugging, testing and polishing the project.
+- Monday (6th): Presentation
