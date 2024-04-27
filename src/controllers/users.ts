@@ -15,7 +15,16 @@ export async function getAllUsers(req: Request, res: Response, next: NextFunctio
 }
 
 export async function getUserById(req: Request, res: Response, next: NextFunction) {
-    res.status(200).json({
-        message: 'Server settings'
-    })
+    try {
+        const user = await User.findOne(
+            { username: req.params.uname },
+            '-passwordHash'
+        )
+        if (!user) {
+            return sendJSONError(res, 404, `User ${req.params.uname} not found`)
+        }
+        res.status(200).json(user)
+    } catch (error) {
+        sendJSONError(res, 500, `Internal error retrieving user: ${error}`)
+    }
 }
