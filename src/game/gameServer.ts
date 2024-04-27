@@ -347,4 +347,6 @@ export class GameServer {
 
 const gameServer = new GameServer()
 
+console.log('created server')
+
 export default gameServer

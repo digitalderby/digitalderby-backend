@@ -14,7 +14,7 @@ import {
 
 const router = express.Router()
 
-router.post('/getAdminToken', loginAsAdmin)
+router.post('/login', loginAsAdmin)
 
 router.get('/settings', loggedInAsAdmin, getServerSettings)
 router.get('/serverStatus', getServerStatus)

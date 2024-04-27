@@ -1,10 +1,25 @@
+import jwt from 'jsonwebtoken'
 import { NextFunction, Request, Response } from "express"
 import gameServer from "../game/gameServer.js"
 import { server } from "../app.js"
+import { saltPassword, verifyPassword } from "../auth/password.js"
+
+const adminPasswordHash = await saltPassword(process.env.ADMIN_PASSWORD || 'admin')
 
 export async function loginAsAdmin(req: Request, res: Response, next: NextFunction) {
+    if (!(await verifyPassword(req.body.password, adminPasswordHash))) {
+        return next({ status: 400, message: 'Could not login as admin' })
+    }
+    const payload = { isAdmin: true }
+    const token = jwt.sign(
+        payload,
+        process.env.AUTH_SECRET || 'secret',
+        { expiresIn: '1d' },
+    )
+
     res.status(200).json({
-        message: 'Created admin token'
+        message: 'Created admin token',
+        token: token,
     })
 }
 

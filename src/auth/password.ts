@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt'
 
-const SALT_ROUNDS = 20
+const SALT_ROUNDS = 10
 
 export async function saltPassword(password: string): Promise<string> {
     if (password.length === 0) {
