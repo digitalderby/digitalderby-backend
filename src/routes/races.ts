@@ -7,6 +7,5 @@ router.get('/', dummyRouter)
 router.get('/lastGame', dummyRouter)
 router.get('/:id', dummyRouter)
 router.get('/:id/horses', dummyRouter)
-router.get('/:id/pot', dummyRouter)
 
 export default router

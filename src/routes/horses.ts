@@ -1,11 +1,10 @@
 import express from 'express'
-import { loggedInAsAdmin } from '../auth/authentication.js'
-import dummyRouter from '../dummyHandler.js'
+import { getAllHorses, getHorseById, getHorsesLastGames } from '../controllers/horses.js'
 
 const router = express.Router()
 
-router.get('/', dummyRouter)
-router.get('/:id', dummyRouter)
-router.get('/:id/lastGames', dummyRouter)
+router.get('/', getAllHorses)
+router.get('/:id', getHorseById)
+router.get('/:id/lastGames', getHorsesLastGames)
 
 export default router

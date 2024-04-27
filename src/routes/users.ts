@@ -1,10 +1,9 @@
 import express from 'express'
-import dummyRouter from '../dummyHandler.js'
+import { getAllUsers, getUserById } from '../controllers/users.js'
 
 const router = express.Router()
 
-router.post('/', dummyRouter)
-router.post('/:uname', dummyRouter)
-router.post('/:uname/bets', dummyRouter)
+router.post('/', getAllUsers)
+router.post('/:uname', getUserById)
 
 export default router

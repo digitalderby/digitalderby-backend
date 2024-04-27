@@ -1,14 +1,14 @@
 import express from 'express'
-import dummyRouter from '../dummyHandler.js'
 import { loggedInAsUser } from '../auth/authentication.js'
+import { clearBetOnCurrentGame, getBetOnCurrentGame, getCurrentGame, getWallet, setBetOnCurrentGame } from '../controllers/http.js'
 
 const router = express.Router()
 
-router.get('/currentGame', dummyRouter)
+router.get('/currentGame', getCurrentGame)
 
-router.get('/wallet', loggedInAsUser, dummyRouter)
-router.get('/currentGame/bet', loggedInAsUser, dummyRouter)
-router.put('/currentGame/bet', loggedInAsUser, dummyRouter)
-router.delete('/currentGame/bet', loggedInAsUser, dummyRouter)
+router.get('/wallet', loggedInAsUser, getWallet)
+router.get('/currentGame/bet', loggedInAsUser, getBetOnCurrentGame)
+router.put('/currentGame/bet', loggedInAsUser, setBetOnCurrentGame)
+router.delete('/currentGame/bet', loggedInAsUser, clearBetOnCurrentGame)
 
 export default router
