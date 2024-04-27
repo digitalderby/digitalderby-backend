@@ -62,7 +62,8 @@ const userSchema = new mongoose.Schema<IUser>({
     passwordHash: {
         type: String,
         required: true,
-    }
+    },
+    profile: profileSchema,
 })
 
 export default mongoose.model('User', userSchema)

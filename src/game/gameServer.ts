@@ -12,6 +12,8 @@ export const BETTING_DELAY = 10
 export const PRERACE_DELAY = 3
 export const RESULTS_DELAY = 10
 
+export const DEFAULT_WALLET = 100
+
 const ServerInactiveError = {
     message: 'Server is inactive'
 }

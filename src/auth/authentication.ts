@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from 'jsonwebtoken'
 import { jwtSecret } from "./secrets.js";
+import { deletedUsers } from "./tokens.js";
 
 // Get the admin password from the environment and hash it
 export async function loggedInAsUser(req: Request, res: Response, next: NextFunction) {
@@ -10,6 +11,14 @@ export async function loggedInAsUser(req: Request, res: Response, next: NextFunc
         token = token.replace('Bearer ', '')
 
         const payload = jwt.verify(token, jwtSecret)
+        if (typeof payload === 'string') {
+            return res.status(400).json('Could not parse token')
+        }
+
+        if (!deletedUsers.has(payload.username)) {
+            return res.status(400).json('Cannot be logged in as deleted user')
+        }
+
         req.body.jwtPayload = payload
         next()
     } catch(error) {
