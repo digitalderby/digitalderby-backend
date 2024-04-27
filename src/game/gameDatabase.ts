@@ -5,18 +5,14 @@ import { Race } from "./race.js"
 const HORSE_POPULATION = 1000
 const HORSES_PER_RACE = 4
 
-export class GameDatabase {
+class GameDatabase {
     horses: Array<Horse> = []
 
-    static create(): GameDatabase {
-        let db = new GameDatabase
-        db.horses = Array.from(
+    populate() {
+        this.horses = Array.from(
             {length: HORSE_POPULATION},
             (_v, i) => Horse.random(i)
         )
-        // TODO: implement natural selection so only the highest quality
-        // horses are selected
-        return db
     }
 
     /** Create a new race by taking a random sample of horses from the population */
@@ -28,3 +24,9 @@ export class GameDatabase {
         return new Race(indices.map((i) => this.horses[i]))
     }
 }
+
+const database = new GameDatabase()
+
+database.populate()
+
+export default database

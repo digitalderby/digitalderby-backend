@@ -1,7 +1,7 @@
-import { Handler, Request, Response } from "express";
+import { Handler, NextFunction, Request, Response } from "express";
 import jwt from 'jsonwebtoken'
 
-export async function loggedInAsUser(req: any, res: Response, next: any) {
+export async function loggedInAsUser(req: any, res: Response, next: NextFunction) {
     try {
         let token = req.get('Authorization') || req.query.token || req.body.token
         if (!token) { throw 'Not Logged In' }
@@ -15,8 +15,8 @@ export async function loggedInAsUser(req: any, res: Response, next: any) {
     }
 }
 
-export async function loggedInAsAdmin(req: Request, res: Response, next: Handler) {
-    // TODO
+export async function loggedInAsAdmin(req: Request, res: Response, next: NextFunction) {
+    next()
 }
 
 
