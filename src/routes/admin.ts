@@ -1,15 +1,15 @@
 import express from 'express'
 import { loggedInAsAdmin } from '../auth/authentication.js'
-import dummyRouter from '../dummyHandler.js'
+import { createNewHorses, getServerSettings, loginAsAdmin, startRace, startRaceAndAutostart, toggleAutostart } from '../controllers/admin.js'
 
 const router = express.Router()
 
-router.post('/getAdminToken', dummyRouter)
+router.post('/getAdminToken', loginAsAdmin)
 
-router.get('/settings', loggedInAsAdmin, dummyRouter)
-router.post('/startRace', loggedInAsAdmin, dummyRouter)
-router.post('/startRaceAndAutostart', loggedInAsAdmin, dummyRouter)
-router.post('/autostart', loggedInAsAdmin, dummyRouter)
-router.post('/newHorses', loggedInAsAdmin, dummyRouter)
+router.get('/settings', loggedInAsAdmin, getServerSettings)
+router.post('/startRace', loggedInAsAdmin, startRace)
+router.post('/startRaceAndAutostart', loggedInAsAdmin, startRaceAndAutostart)
+router.post('/autostart', loggedInAsAdmin, toggleAutostart)
+router.post('/newHorses', loggedInAsAdmin, createNewHorses)
 
 export default router

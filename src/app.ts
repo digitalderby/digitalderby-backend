@@ -13,6 +13,7 @@ import AdminRouter from './routes/admin.js'
 import RaceRouter from './routes/races.js'
 import HttpInterfaceRouter from './routes/http.js'
 import bodyParser from 'body-parser'
+import { errorHandler } from './errorHandler.js'
 
 const app = express()
 const server = createServer(app)
@@ -42,6 +43,8 @@ app.use('/users', UserRouter)
 app.use('/admin', AdminRouter)
 app.use('/races', RaceRouter)
 app.use('/http', HttpInterfaceRouter)
+
+app.use(errorHandler)
 
 gameServer.mainLoop()
 
