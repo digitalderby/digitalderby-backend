@@ -2,9 +2,8 @@ import jwt from 'jsonwebtoken'
 import { NextFunction, Request, Response } from "express"
 import gameServer from "../game/gameServer.js"
 import { server } from "../app.js"
-import { saltPassword, verifyPassword } from "../auth/password.js"
-
-const adminPasswordHash = await saltPassword(process.env.ADMIN_PASSWORD || 'admin')
+import { verifyPassword } from "../auth/password.js"
+import { adminPasswordHash, jwtSecret } from '../auth/secrets.js'
 
 export async function loginAsAdmin(req: Request, res: Response, next: NextFunction) {
     if (!(await verifyPassword(req.body.password, adminPasswordHash))) {
@@ -13,7 +12,7 @@ export async function loginAsAdmin(req: Request, res: Response, next: NextFuncti
     const payload = { isAdmin: true }
     const token = jwt.sign(
         payload,
-        process.env.AUTH_SECRET || 'secret',
+        jwtSecret,
         { expiresIn: '1d' },
     )
 

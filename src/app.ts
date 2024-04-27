@@ -46,5 +46,3 @@ app.use(errorHandler)
 server.listen(PORT, () => {
     console.log(`listening at http://localhost:${PORT}`)
 })
-
-console.log(process.env.AUTH_SECRET)
