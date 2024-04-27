@@ -85,27 +85,14 @@ A horse race betting application that offers users the thrill of wagering on hor
 
 ## TIMELINE TABLE
 ### Backend
-| Day       | Task        | A | F | L | W |
+| Day       | MVP Item        | A | F | L | W |
 |---------  |------       |---|---|---|---|
-|Saturday   |             |   |   |   |   |
-|Sunday     |             |   |   |   |   |
-|Monday     |             |   |   |   |   |
-|Tuesday    |             |   |   |   |   |
-|Wednesday  |             |   |   |   |   |
-|Thursday   |             |   |   |   |   |
-|Friday     |             |   |   |   |   |
-|Saturday   |             |   |   |   |   |
-|Sunday     |             |   |   |   |   |
-
-### Frontend
-| Day       | Task        | A | F | L | W |
-|---------  |------       |---|---|---|---|
-|Saturday   |             |   |   |   |   |
-|Sunday     |             |   |   |   |   |
-|Monday     |             |   |   |   |   |
-|Tuesday    |             |   |   |   |   |
-|Wednesday  |             |   |   |   |   |
-|Thursday   |             |   |   |   |   |
-|Friday     |             |   |   |   |   |
-|Saturday   |             |   |   |   |   |
-|Sunday     |             |   |   |   |   |
+|Saturday   | #2 - #6 User Account           |   |   |   |   |
+|Sunday     | #14, #13, Curr Balance & Timer          |   |   |   |   |
+|Monday     |  #10, #11, #12 Race & results           |   |   |   |   |
+|Tuesday    | #8, #9 Horse list and place bet           |   |   |   |   |
+|Wednesday  | *DEPLOY* Debug          |   |   |   |   |
+|Thursday   | Styling           |   |   |   |   |
+|Friday     | Icebox items            |   |   |   |   |
+|Saturday   | Wild card day             |   |   |   |   |
+|Sunday     | Debugging and Testing            |   |   |   |   |
