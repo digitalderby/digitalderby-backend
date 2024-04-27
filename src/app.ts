@@ -4,6 +4,8 @@ import { createServer } from 'node:http'
 import gameServer from './game/gameServer.js'
 import gameDatabase from './game/gameDatabase.js'
 
+import './config/database.js'
+
 import cors from 'cors'
 import logger from 'morgan'
 
