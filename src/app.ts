@@ -19,10 +19,13 @@ import bodyParser from 'body-parser'
 
 import minimist from 'minimist'
 
-export const args = minimist(process.argv.slice(2))
+export const args = {
+    readOnly: false,
+}
 
 if (args['read-only']) {
     console.log('Read-only mode enabled')
+    args.readOnly = true
 }
 
 const app = express()
