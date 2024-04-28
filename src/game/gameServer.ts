@@ -50,6 +50,7 @@ export class GameServer {
     resultsTimer: number = 0
 
     _loopCancelFunction: (() => void) | null = null
+    _pauseFunction: (() => void) | null = null
 
     /** Array of all race states */
     raceStates: Array<RaceState> | null = null
@@ -308,7 +309,6 @@ export class GameServer {
     startMainLoop() {
         this.prevTime = hrTimeMs()
         let cancel = false
-        this._loopCancelFunction = () => { cancel = true }
 
         this.serverStatus = 'active'
 
