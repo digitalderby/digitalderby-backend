@@ -101,22 +101,22 @@ export async function deleteUser(
 ) {
   try {
     // Extract the user ID from request parameters
-    const userIdToDelete = req.params.userId;
+    const usernameToDelete = req.params.uname;
 
     // Find the user by ID
-    const user = await User.findById(userIdToDelete);
+    const user = await User.findOne({ username: usernameToDelete });
 
     // If user does not exist, return 404 Not Found
     if (!user) {
-      return sendJSONError(res, 404, `User ${userIdToDelete} not found`);
+      return sendJSONError(res, 404, `User ${usernameToDelete} not found`);
     }
 
     // Delete the user
-    await User.deleteOne({ _id: userIdToDelete });
+    await User.deleteOne({ _id: usernameToDelete });
 
     // Return success message
     res.status(200).json({
-      message: `User ${userIdToDelete} has been deleted successfully`,
+      message: `User ${usernameToDelete} has been deleted successfully`,
     });
   } catch (error) {
     // Handle errors
