@@ -20,7 +20,7 @@ export async function getUserById(req: Request, res: Response, next: NextFunctio
     try {
         const user = await User.findOne(
             { username: req.params.uname },
-            '-passwordHash -_id'
+            '-passwordHash'
         )
         if (!user) {
             return sendJSONError(res, 404, `User ${req.params.uname} not found`)
