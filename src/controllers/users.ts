@@ -107,15 +107,15 @@ export async function deleteUser(
 
     // If user does not exist, return 404 Not Found
     if (!user) {
-      return sendJSONError(res, 404, `User ${userIdToDelete} not found`);
+        return sendJSONError(res, 404, `User ${userIdToDelete} not found`);
     }
 
     // Delete the user
-    await user.remove();
+    await User.deleteOne({ _id: userIdToDelete });
 
     // Return success message
     res.status(200).json({
-      message: `User ${userIdToDelete} has been deleted successfully`,
+        message: `User ${userIdToDelete} has been deleted successfully`,
     });
   } catch (error) {
     // Handle errors
