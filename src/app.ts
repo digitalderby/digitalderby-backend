@@ -17,7 +17,8 @@ import RaceRouter from './routes/races.js'
 import HttpInterfaceRouter from './routes/http.js'
 import bodyParser from 'body-parser'
 
-import minimist from 'minimist'
+import swaggerUi from 'swagger-ui-express'
+import YAML from 'yamljs'
 
 export const args = {
     readOnly: false,
@@ -55,6 +56,18 @@ app.use('/horses', HorseRouter)
 app.use('/users', UserRouter)
 app.use('/races', RaceRouter)
 app.use('/http', HttpInterfaceRouter)
+
+const swaggerOptions = {
+    swaggerOptions: {
+        supportedSubmitMethods: [],
+    }
+}
+
+app.use(
+    '/api-docs',
+    swaggerUi.serve,
+    swaggerUi.setup(YAML.load('./api-docs.yaml'), swaggerOptions)
+)
 
 server.listen(PORT, () => {
     console.log(`listening at http://localhost:${PORT}`)
