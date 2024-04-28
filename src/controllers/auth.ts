@@ -74,10 +74,22 @@ export async function loginAsUser(req: Request, res: Response, next: NextFunctio
 // to this account. For now we can probably just not implement this route.
 export async function deleteAccount(req: Request, res: Response, next: NextFunction) {
     try {
+        // Check if the user is in the database first
+        const userToDelete = req.body.jwtPayload.username;
+
+        const user = await User.findOne(userToDelete);
+
+        if (!user) {
+          return sendJSONError(res, 404, `User ${userToDelete} not found`);
+        }
+
+        // Now delete
         await User.deleteOne({ user: req.body.jwtPayload.username })
+
         markDeletedUser(req.body.jwtPayload.username)
-        res.status(200).json({ message: 'Deleted account' })
+
+        res.status(200).json({ message: 'Successfully deleted account' })
     } catch (error) {
-        next({ status: '500', message: `Internal error logging in: ${error}` })
+        next({ status: '500', message: `Internal error deleting user: ${error}` })
     }
 }
