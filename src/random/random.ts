@@ -44,11 +44,29 @@ export function shuffle(arr: Array<any>) {
 export function randomIndicesNoReplacement(n: number, k: number): Array<number> | null {
     if (n < k) { return null }
     let arr = Array.from({length: n}, (_, i) => i)
-    for (let i = 0; i < k-1; i++) {
+    for (let i = 0; i < Math.min(k, n-1); i++) {
         const j = Math.floor(i + Math.random() * (arr.length-i))
         const tmp = arr[i]
         arr[i] = arr[j]
         arr[j] = tmp
     }
+    console.log(arr)
     return arr.slice(0, k)
+}
+
+/**
+ * Rolls n d-sided dice, takes the highest k, and sums them together.
+ *
+ * @param {number} d - Number of sides on each die.
+ * @param {number} n - Number of dice.
+ * @param {number} k - Number of dice we are summing together.
+ * @returns {number}
+ */
+export function rollDiceDropLowest(d: number, n: number, k: number): number {
+    const dice = Array.from({length: n},
+        (_, _i) => randRange(1, d)
+    )
+    dice.sort((a,b) => a-b)
+    let topK = dice.slice(n-k, n)
+    return topK.reduce((a,b) => a+b, 0)
 }

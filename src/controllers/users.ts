@@ -15,7 +15,7 @@ export async function getAllUsers(
   }
 }
 
-export async function getUserById(
+export async function getUserByUsername(
   req: Request,
   res: Response,
   next: NextFunction

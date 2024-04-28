@@ -2,8 +2,8 @@ import { randomIndicesNoReplacement } from "../random/random.js"
 import { Horse } from "./horse/horse.js"
 import { Race } from "./race.js"
 
-const HORSE_POPULATION = 1000
-const HORSES_PER_RACE = 4
+export const HORSE_POPULATION = 100
+export const HORSES_PER_RACE = 4
 
 class GameDatabase {
     horses: Array<Horse> = []
