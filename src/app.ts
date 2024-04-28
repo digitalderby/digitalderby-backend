@@ -17,6 +17,14 @@ import RaceRouter from './routes/races.js'
 import HttpInterfaceRouter from './routes/http.js'
 import bodyParser from 'body-parser'
 
+import minimist from 'minimist'
+
+export const args = minimist(process.argv.slice(2))
+
+if (args['read-only']) {
+    console.log('Read-only mode enabled')
+}
+
 const app = express()
 export const server = createServer(app)
 
@@ -28,6 +36,7 @@ const corsSettings = {
         'http://localhost:5173',
     ]
 }
+
 
 app.use(logger('dev'))
 app.use(cors(corsSettings))

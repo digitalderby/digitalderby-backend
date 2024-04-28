@@ -17,6 +17,7 @@
     "@types/bcrypt": "^5.0.2",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.6",
+    "@types/minimist": "^1.2.5",
     "@types/morgan": "^1.9.9",
     "nodemon": "^3.1.0",
     "typescript": "^5.4.5"
@@ -28,6 +29,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
+    "minimist": "^1.2.8",
     "mongodb": "^6.5.0",
     "mongoose": "^8.3.2",
     "morgan": "^1.10.0",
