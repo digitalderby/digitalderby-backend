@@ -71,4 +71,5 @@ app.use(
 
 server.listen(PORT, () => {
     console.log(`listening at http://localhost:${PORT}`)
+    console.log(`Access api documentation at http://localhost:${PORT}/api-docs`)
 })

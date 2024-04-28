@@ -16,3 +16,7 @@ Create a .env file populated with the following elements:
 
 Run `npm run main`. You may pass additional arguments as follows:
 * `--read-only` - Does not write to the database.
+
+## API Documentation
+
+Access the API documentation after starting the server by accessing the `/api-docs` endpoint.
