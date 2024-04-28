@@ -1,8 +1,8 @@
 import 'dotenv/config'
 import express from 'express'
 import { createServer } from 'node:http'
-import gameServer from './game/gameServer.js'
-import gameDatabase from './game/gameDatabase.js'
+import './game/gameServer.js'
+import './game/gameDatabase.js'
 
 import './config/database.js'
 
