@@ -92,6 +92,7 @@ export async function updateUser(
   }
 }
 
+// TODO: Check for security vulnerabilities in this function
 // Function to delete a user by ID
 export async function deleteUser(
   req: Request,
@@ -107,7 +108,7 @@ export async function deleteUser(
 
     // If user does not exist, return 404 Not Found
     if (!user) {
-        return sendJSONError(res, 404, `User ${userIdToDelete} not found`);
+      return sendJSONError(res, 404, `User ${userIdToDelete} not found`);
     }
 
     // Delete the user
@@ -115,7 +116,7 @@ export async function deleteUser(
 
     // Return success message
     res.status(200).json({
-        message: `User ${userIdToDelete} has been deleted successfully`,
+      message: `User ${userIdToDelete} has been deleted successfully`,
     });
   } catch (error) {
     // Handle errors
