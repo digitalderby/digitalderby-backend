@@ -70,9 +70,9 @@ export async function loginAsUser(req: Request, res: Response, next: NextFunctio
     }
 }
 
-// NOTE: This may be buggy as we need a way to invalidate all tokens assigned
-// to this account. For now we can probably just not implement this route.
-export async function deleteAccount(req: Request, res: Response, next: NextFunction) {
+// TODO: Make this more robust security-wise by invalidating any and all tokens
+// referring to deleted users
+export async function deleteLoggedInUser(req: Request, res: Response, next: NextFunction) {
     try {
         // Check if the user is in the database first
         const userToDelete = req.body.jwtPayload.username;
