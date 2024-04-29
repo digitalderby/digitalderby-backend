@@ -6,6 +6,7 @@ import { verifyPassword } from "../auth/password.js"
 import { adminPasswordHash, jwtSecret } from '../auth/secrets.js'
 import { Horse, IHorse, generateNewHorses } from '../models/Horse.js'
 import { sendJSONError } from '../errorHandler.js'
+import { generateLocalHorsesFromSpecs } from '../game/horse/localHorses.js'
 
 export async function loginAsAdmin(req: Request, res: Response, next: NextFunction) {
     if (!(await verifyPassword(req.body.password, adminPasswordHash))) {
@@ -71,6 +72,8 @@ export async function createNewHorses(req: Request, res: Response, next: NextFun
 
         let horses = generateNewHorses()
             .map((h) => new Horse(h))
+
+        generateLocalHorsesFromSpecs(horses)
 
         await Promise.all(horses.map((hm) => hm.save()))
 

@@ -1,10 +1,10 @@
 import { Server as HTTPServer } from 'node:http'
 import { Socket, Server as SocketIOServer } from "socket.io"
 import { ClientInfo } from "../clientInfo.js"
-import gameDatabase from "./gameDatabase.js"
 import { hrTimeMs } from "../time/time.js"
 import { Race } from './race.js'
 import { RaceState } from './raceState.js'
+import { createRace } from './horse/localHorses.js'
 
 export const SERVER_TICK_RATE_MS = 100
 
@@ -199,7 +199,7 @@ export class GameServer {
 
     startBettingMode() {
         this.status = 'betting'
-        this.race = gameDatabase.createRace()
+        this.race = createRace()
         this.bettingTimer = BETTING_DELAY * 1000
         this.raceStates = null
     }
@@ -268,7 +268,7 @@ export class GameServer {
                 status: this.status,
                 clients: [...this.clients.keys()],
                 messages: this.messages,
-                lag: Number(lag) - SERVER_TICK_RATE_MS,
+                lag: Number(lag),
 
                 race: this.race,
                 bettingTimer: this.bettingTimer
@@ -279,7 +279,7 @@ export class GameServer {
                 status: this.status,
                 clients: [...this.clients.keys()],
                 messages: this.messages,
-                lag: Number(lag) - SERVER_TICK_RATE_MS,
+                lag: Number(lag),
 
                 preRaceTimer: this.preRaceTimer,
                 raceStates:
@@ -293,7 +293,7 @@ export class GameServer {
                 status: this.status,
                 clients: [...this.clients.keys()],
                 messages: this.messages,
-                lag: Number(lag) - SERVER_TICK_RATE_MS,
+                lag: Number(lag),
 
                 resultsTimer: this.resultsTimer,
                 raceStates:
@@ -309,6 +309,7 @@ export class GameServer {
     startMainLoop() {
         this.prevTime = hrTimeMs()
         let cancel = false
+        this._loopCancelFunction = () => { cancel = true }
 
         this.serverStatus = 'active'
 
