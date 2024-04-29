@@ -10,26 +10,14 @@ function interpolate(specStatValue: number, bounds: Array<number>): number {
 }
 
 export class InternalHorse {
-    name: string
-    icons: string[]
-    color: string
-
-    displayTopSpeed: number;
-    displayStamina: number;
-    displayAcceleration: number;
+    spec: IHorse
 
     topSpeed: number;
     stamina: number;
     acceleration: number;
 
     constructor(horseSpec: IHorse) {
-        this.name = horseSpec.name
-        this.icons = horseSpec.icons
-        this.color = horseSpec.color
-
-        this.displayTopSpeed = horseSpec.stats.topSpeed
-        this.displayStamina = horseSpec.stats.stamina
-        this.displayAcceleration = horseSpec.stats.acceleration
+        this.spec = horseSpec
 
         this.topSpeed = interpolate(horseSpec.stats.topSpeed, SPEED_BOUNDS)
         this.acceleration = interpolate(horseSpec.stats.acceleration, ACCELERATION_BOUNDS)
