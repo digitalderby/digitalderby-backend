@@ -122,8 +122,7 @@ export class GameServer {
     }
     
     userHandler(socket: Socket) {
-        console.log(`a user connected: ${socket.data}`)
-
+        console.log('in user handler')
         // Initially clients are unauthenticated. Clients may authenticate
         // themselves by sending a 'login' message to the server.
         this.clients.set(socket.id, {
@@ -215,6 +214,9 @@ export class GameServer {
                 message: 'ok',
             })
         })
+
+        console.log('emitting', socket.data.username)
+        socket.emit('username', socket.data.username)
     }
 
     startBettingMode() {
