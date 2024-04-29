@@ -23,13 +23,14 @@ class BettingWallet {
   }
 
   public addWinnings(amount: number): void {
-    this.balance += amount;
-    console.log(`Winnings added: $${amount}. New balance: $${this.balance}.`);
+    const doubledAmount = amount * 2; // Double the amount won
+    this.balance += doubledAmount;
+    console.log(`Winnings added: $${doubledAmount}. New balance: $${this.balance}.`);
   }
 }
 
 // Example usage:
 let myWallet = new BettingWallet(100); // Starting with $100
 myWallet.placeBet(50); // Trying to bet $50
-myWallet.addWinnings(75); // Adding winnings of $75
+myWallet.addWinnings(75); // Adding winnings of $75, which will be doubled to $150
 console.log(`Final balance: $${myWallet.getBalance()}`); // Display final balance
