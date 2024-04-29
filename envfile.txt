@@ -1,0 +1,4 @@
+PORT=3000
+AUTH_SECRET="supersecretauthsecret"
+ADMIN_PASSWORD="admin"
+DATABASE_URI="mongodb+srv://digitalderby:n5CuYvRV5BrEEsv8L@cluster0.gcbm12s.mongodb.net/digitalderby?retryWrites=true&w=majority&appName=Cluster0"

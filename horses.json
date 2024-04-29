@@ -1,0 +1,62 @@
+[
+  {
+      "name": "Shadow",
+      "icons": ["🐎"],
+      "color": "Black",
+      "stats": {
+          "speed": 95,
+          "stamina": 90,
+          "agility": 85
+      }
+  },
+  {
+      "name": "Flash",
+      "icons": ["🐎"],
+      "color": "Red",
+      "stats": {
+          "speed": 90,
+          "stamina": 85,
+          "agility": 80
+      }
+  },
+  {
+      "name": "Pegasus",
+      "icons": ["🐎"],
+      "color": "White",
+      "stats": {
+          "speed": 95,
+          "stamina": 90,
+          "agility": 85
+      }
+  },
+  {
+      "name": "Thunder",
+      "icons": ["🐎", "⚡️"],
+      "color": "Yellow",
+      "stats": {
+          "speed": 88,
+          "stamina": 92,
+          "agility": 82
+      }
+  },
+  {
+      "name": "Spirit",
+      "icons": ["🐎"],
+      "color": "White",
+      "stats": {
+          "speed": 85,
+          "stamina": 95,
+          "agility": 88
+      }
+  },
+  {
+      "name": "Silver",
+      "icons": ["🐎"],
+      "color": "Silver",
+      "stats": {
+          "speed": 97,
+          "stamina": 87,
+          "agility": 90
+      }
+  }
+]

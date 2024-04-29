@@ -1,0 +1,242 @@
+openapi: 3.0.0
+info:
+  title: Digital Derby
+  version: 0.0.0
+components:
+  schemas:
+    bet:
+      name: Bet
+      description: A bet placed on a certain game and a certain horse
+      type: object
+      properties:
+        gameId:
+          type: string
+        horseId:
+          type: string
+        betValue:
+          type: integer
+        returns:
+          type: integer
+    userProfile:
+      name: User Profile
+      description: A user, their current wallet balance, and their past betting history
+      type: object
+      properties:
+        username:
+          type: string
+        profile:
+          type: object
+          properties:
+            wallet:
+              type: integer
+            betLog:
+              type: array
+              items:
+                $ref: '#/components/schemas/bet'
+    horseProfile:
+      name: HorseProfile
+      description: A horse and their stats
+      type: object
+      properties:
+        name:
+          type: string
+        icons:
+          type: array
+          items:
+            type: string
+        color:
+          type: string
+        stats:
+          type: object
+  parameters:
+    username:
+      name: Username
+      in: path
+      description: Username
+      type: string
+    horseId:
+      name: Horse ID
+      in: path
+      description: Slug to identify a certain horse
+      type: string
+    adminToken:
+      name: Admin Token
+      description: JWT token to authorize a client as an admin.
+      in: header
+      required: true
+      schema:
+        type: string 
+        example:
+          Bearer <adminToken>
+    userToken:
+      name: User Token
+      description: JWT token to authorize a client as a specific user.
+      in: header
+      required: true
+      schema:
+        type: string 
+        example:
+          Bearer <adminToken>
+tags:
+  - name: Admin Tools
+    description: Tools for managing the operation of the server
+  - name: Authentication
+    description: Endpoints for signing up and logging in
+  - name: Horse Data
+    description: Endpoints for accessing historical horse data
+  - name: Race Data
+    description: Endpoints for accessing historical race data
+  - name: User Data
+    description: Endpoints for accessing user information
+  - name: HTTP Interface
+    description: An HTTP interface that can be used to manipulate the server as an alternative to Socket.IO
+paths:
+  /admin/login:
+    post:
+      summary: Log in as an admin
+      tags: [Admin Tools]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - password
+              properties:
+                password:
+                  type: string
+              example:
+                password: someAdminPassword
+  /admin/settings:
+    get:
+      summary: Get current server configuration
+      tags: [Admin Tools]
+  /admin/serverStatus:
+    get:
+      summary: Get current server status
+      tags: [Admin Tools]
+  /admin/autostart:
+    post:
+      summary: Enable/disable automatically starting a new race once one ends
+      tags: [Admin Tools]
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+  /admin/newHorses:
+    post:
+      summary: Generate a new population of horses
+      tags: [Admin Tools]
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+  /admin/startRaceServer:
+    post:
+      summary: Creates a new Socket.IO server and disconnects all old clients
+      tags: [Admin Tools]
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+  /admin/stopRaceServer:
+    post:
+      summary: Closes the Socket.IO server
+      tags: [Admin Tools]
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+  /admin/startRaceLoop:
+    post:
+      summary: Starts the race simulation
+      tags: [Admin Tools]
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+  /admin/startRaceAndAutostart:
+    post:
+      summary: Starts the race simulation and automatically starts a new race once one ends
+      tags: [Admin Tools]
+      parameters:
+        - $ref: '#/components/parameters/adminToken'
+  /auth/login:
+    post:
+      summary: Log in as a user
+      tags: [Authentication]
+  /auth/signup:
+    post:
+      summary: Sign up for a new account
+      tags: [Authentication]
+  /horses:
+    get:
+      summary: Get all historical horse data
+      tags: [Horse Data]
+  /horses/{id}:
+    get:
+      summary: Get a specific horse by name
+      tags: [Horse Data]
+      parameters:
+        - $ref: '#/components/parameters/horseId'
+      responses:
+        "200":
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/horseProfile'
+        "404":
+          description: 'Not found'
+  /races:
+    get:
+      summary: Get all historical race data
+      tags: [Race Data]
+  /races/lastGame:
+    get:
+      summary: Get the game log for the most recent game
+      tags: [Race Data]
+  /races/{id}:
+    get:
+      summary: Get a specific game by id
+      tags: [Race Data]
+  /races/{id}:
+    get:
+      summary: Get all the details for all the horses in a specific race
+      tags: [Race Data]
+  /users:
+    get:
+      summary: Get all registered users
+      tags: [User Data]
+  /users/{username}:
+    get:
+      summary: Get a specific user profile by id
+      tags: [User Data]
+      parameters:
+        - $ref: '#/components/parameters/username'
+      responses:
+        "200":
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userProfile'
+        "404":
+          description: 'Not found'
+  /http/currentGame:
+    get:
+      summary: Get the current game status, if a game is running
+      tags: [HTTP Interface]
+  /http/wallet:
+    get:
+      summary: Get your current wallet balance
+      tags: [HTTP Interface]
+      parameters:
+        - $ref: '#/components/parameters/userToken'
+  /http/currentGame/bet:
+    get:
+      summary: Get the current value of your bet
+      tags: [HTTP Interface]
+      parameters:
+        - $ref: '#/components/parameters/userToken'
+    put:
+      summary: Change the current value of your bet
+      tags: [HTTP Interface]
+      parameters:
+        - $ref: '#/components/parameters/userToken'
+    delete:
+      summary: Clear your current bet
+      tags: [HTTP Interface]
+      parameters:
+        - $ref: '#/components/parameters/userToken'
+      
