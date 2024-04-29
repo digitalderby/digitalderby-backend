@@ -1,4 +1,4 @@
-import { Horse } from "./horse/horse.js"
+import { InternalHorse } from "./horse/horse.js"
 import { RACE_DURATION, Race } from "./race.js"
 import { SERVER_TICK_RATE_MS } from "./gameServer.js"
 
@@ -71,12 +71,12 @@ export class RaceState {
 }
 
 export class HorseState {
-    horse: Horse 
+    horse: InternalHorse 
     position: number = 0
     currentSpeed: number = 0
     finishTime: number | null = null
 
-    constructor(horse: Horse) {
+    constructor(horse: InternalHorse) {
         this.horse = horse
     }
 }

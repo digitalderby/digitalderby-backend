@@ -1,33 +1,31 @@
+import { IHorse } from "../../models/Horse.js";
 import { randFromBounds } from "../../random/random.js";
 
 export const SPEED_BOUNDS = [50, 100]
 export const ACCELERATION_BOUNDS = [1,5]
 export const STAMINA_BOUNDS = [500, 600]
 
-export class Horse {
+function interpolate(specStatValue: number, bounds: Array<number>): number {
+    const normalized = (specStatValue - 3)/17
+    return bounds[0] + Math.floor(normalized * (bounds[1] - bounds[0]))
+}
+
+export class InternalHorse {
+    name: string
+    icons: string[]
+    color: string
+
     topSpeed: number;
     stamina: number;
     acceleration: number;
-    id: number;
 
-    static random(id: number) {
-        return new Horse({
-            id: id,
-            topSpeed: randFromBounds(SPEED_BOUNDS),
-            acceleration: randFromBounds(ACCELERATION_BOUNDS),
-            stamina: randFromBounds(STAMINA_BOUNDS),
-        })
-    }
+    constructor(horseSpec: IHorse) {
+        this.name = horseSpec.name
+        this.icons = horseSpec.icons
+        this.color = horseSpec.color
 
-    constructor({
-        id = 0,
-        topSpeed = 5,
-        stamina = 5,
-        acceleration = 5,
-    }) {
-        this.id = id
-        this.topSpeed = topSpeed
-        this.stamina = stamina
-        this.acceleration = acceleration
+        this.topSpeed = interpolate(horseSpec.stats.topSpeed, SPEED_BOUNDS)
+        this.acceleration = interpolate(horseSpec.stats.acceleration, ACCELERATION_BOUNDS)
+        this.stamina = interpolate(horseSpec.stats.stamina, STAMINA_BOUNDS)
     }
 }
