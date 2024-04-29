@@ -99,7 +99,6 @@ export function generateNewHorses(): IHorse[] {
                 stats: {
                     topSpeed: rollDiceDropLowest(6, 4, 3),
                     stamina: rollDiceDropLowest(6, 4, 3),
-
                     acceleration: rollDiceDropLowest(6, 4, 3),
                 }
             }

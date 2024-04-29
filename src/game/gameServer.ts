@@ -5,6 +5,7 @@ import { hrTimeMs } from "../time/time.js"
 import { Race } from './race.js'
 import { RaceState } from './raceState.js'
 import { createRace } from './horse/localHorses.js'
+import { BetInfo } from './betInfo.js'
 
 export const SERVER_TICK_RATE_MS = 100
 
@@ -26,6 +27,7 @@ export class GameServer {
     /** Map between the Socket.IO ids of each client and a container
     *   for their client info */
     clients: Map<string, ClientInfo> = new Map()
+    bets: Map<string, BetInfo> = new Map()
 
     messages: Array<string> = []
 
@@ -50,7 +52,6 @@ export class GameServer {
     resultsTimer: number = 0
 
     _loopCancelFunction: (() => void) | null = null
-    _pauseFunction: (() => void) | null = null
 
     /** Array of all race states */
     raceStates: Array<RaceState> | null = null
@@ -90,59 +91,6 @@ export class GameServer {
         this.io.close()
         this.serverStatus = 'closed'
     }
-
-    guestHandler(socket: Socket) {
-        console.log('a user connected')
-        console.log(socket)
-
-        // Initially clients are unauthenticated. Clients may authenticate
-        // themselves by sending a 'login' message to the server.
-        this.clients.set(socket.id, {
-            socket: socket,
-            authed: false,
-            username: ''
-        })
-
-        // Log all events as they come in.
-        socket.onAny((evt, ...args) => console.log(evt, args))
-
-        // Client attempted to login.
-        socket.on('login', ({ username }, cb) => {
-            let clientInfo = this.clients.get(socket.id)
-            // If client doesn't exist somehow, inform client that
-            // their info isn't in the list of clients in the server.
-            if (clientInfo === undefined) {
-                cb({
-                    message: 'not in client listing'
-                })
-                return
-            }
-            clientInfo.authed = true
-            clientInfo.username = username
-            // Inform user that authentication was successful
-            cb({
-                message: 'ok'
-            })
-        })
-
-        // Client attempted to logout.
-        socket.on('logout', () => {
-            let clientInfo = this.clients.get(socket.id)
-            if (clientInfo === undefined) { return }
-            clientInfo.authed = false
-            clientInfo.username = ''
-        })
-
-        // Client closed the connection.
-        socket.on('disconnect', () => {
-            this.clients.delete(socket.id)
-        })
-
-        // Client sent an action to the server.
-        socket.on('action', (payload) => {
-            this.handleAction(payload)
-        })
-    }
     
     userHandler(socket: Socket) {
         console.log('a user connected')
@@ -160,12 +108,12 @@ export class GameServer {
         socket.onAny((evt, ...args) => console.log(evt, args))
 
         // Client attempted to login.
-        socket.on('login', ({ username }, cb) => {
+        socket.on('login', ({ username }, res) => {
             let clientInfo = this.clients.get(socket.id)
             // If client doesn't exist somehow, inform client that
             // their info isn't in the list of clients in the server.
             if (clientInfo === undefined) {
-                cb({
+                res({
                     message: 'not in client listing'
                 })
                 return
@@ -173,7 +121,7 @@ export class GameServer {
             clientInfo.authed = true
             clientInfo.username = username
             // Inform user that authentication was successful
-            cb({
+            res({
                 message: 'ok'
             })
         })
@@ -191,9 +139,23 @@ export class GameServer {
             this.clients.delete(socket.id)
         })
 
-        // Client sent an action to the server.
-        socket.on('action', (payload) => {
-            this.handleAction(payload)
+        socket.on('bet', ({ betValue, horseIdx }, res) => {
+            let clientInfo = this.clients.get(socket.id)
+            if (clientInfo === undefined) {
+                res({
+                    message: 'Not in client listing'
+                })
+                return
+            }
+            if (!clientInfo.authed) {
+                res({
+                    message: 'Not logged in'
+                })
+            }
+        })
+
+        socket.on('clearBet', (res) => {
+
         })
     }
 
