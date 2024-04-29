@@ -1,5 +1,4 @@
 import { IHorse } from "../../models/Horse.js";
-import { randFromBounds } from "../../random/random.js";
 
 export const SPEED_BOUNDS = [50, 100]
 export const ACCELERATION_BOUNDS = [1,5]
@@ -15,6 +14,10 @@ export class InternalHorse {
     icons: string[]
     color: string
 
+    displayTopSpeed: number;
+    displayStamina: number;
+    displayAcceleration: number;
+
     topSpeed: number;
     stamina: number;
     acceleration: number;
@@ -23,6 +26,10 @@ export class InternalHorse {
         this.name = horseSpec.name
         this.icons = horseSpec.icons
         this.color = horseSpec.color
+
+        this.displayTopSpeed = horseSpec.stats.topSpeed
+        this.displayStamina = horseSpec.stats.stamina
+        this.displayAcceleration = horseSpec.stats.acceleration
 
         this.topSpeed = interpolate(horseSpec.stats.topSpeed, SPEED_BOUNDS)
         this.acceleration = interpolate(horseSpec.stats.acceleration, ACCELERATION_BOUNDS)
