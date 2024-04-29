@@ -16,7 +16,7 @@ export async function getAllHorses(
 
 export async function getHorseById(req: Request, res: Response) {
   try {
-    const horse = await Horse.findById(req.params.id)
+    const horse = await Horse.findById(req.params.id).lean()
     if (!horse) {
       return sendJSONError(res, 404, `Horse not found`);
     }
