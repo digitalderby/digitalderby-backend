@@ -225,6 +225,7 @@ export class GameServer {
         this.bettingTimer = BETTING_DELAY * 1000
         this.raceStates = null
 
+        this.bets = new Map()
         this.pool = Array(HORSES_PER_RACE).fill(0)
         this.totalPool = 0
     }
@@ -260,6 +261,8 @@ export class GameServer {
                 bet.returns = bet.betValue * (this.totalPool/this.pool[bet.horseIdx])
             }
         }
+
+        // do persistence stuff
 
         this.notifyClientsOfBetResults()
     }
@@ -302,7 +305,9 @@ export class GameServer {
                 this.resultsTimer -= SERVER_TICK_RATE_MS
                 return
             }
+
             // start a new race if we're autorestarting
+            this.startBettingMode()
             break;
         }
     }
