@@ -1,11 +1,12 @@
+import { RACE_LENGTH } from "../config/globalsettings.js";
 import { InternalHorse } from "./horse/horse.js";
 
-export const RACE_DURATION = 500
-
 export class Race {
-    horses: Array<InternalHorse>;
+    horses: Array<InternalHorse>
+    length: number
 
     constructor(horses: Array<InternalHorse>) {
         this.horses = horses 
+        this.length = RACE_LENGTH
     }
 }
