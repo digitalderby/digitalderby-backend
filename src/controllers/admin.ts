@@ -4,6 +4,9 @@ import gameServer from "../game/gameServer.js"
 import { server } from "../app.js"
 import { verifyPassword } from "../auth/password.js"
 import { adminPasswordHash, jwtSecret } from '../auth/secrets.js'
+import { Horse, IHorse, generateNewHorses } from '../models/Horse.js'
+import { sendJSONError } from '../errorHandler.js'
+import { generateLocalHorsesFromSpecs } from '../game/horse/localHorses.js'
 
 export async function loginAsAdmin(req: Request, res: Response, next: NextFunction) {
     if (!(await verifyPassword(req.body.password, adminPasswordHash))) {
@@ -63,7 +66,21 @@ export async function toggleAutostart(req: Request, res: Response, next: NextFun
 }
 
 export async function createNewHorses(req: Request, res: Response, next: NextFunction) {
-    res.status(200).json({
-        message: 'Server settings'
-    })
+    // Delete all horses already in the database first
+    try {
+        await Horse.deleteMany({})
+
+        let horses = generateNewHorses()
+            .map((h) => new Horse(h))
+
+        generateLocalHorsesFromSpecs(horses)
+
+        await Promise.all(horses.map((hm) => hm.save()))
+
+        res.status(200).json({
+            message: 'Successfully created a new generation of horses'
+        })
+    } catch (error) {
+        sendJSONError(res, 500, `Internal error creating horses: ${error}`)
+    }
 }
