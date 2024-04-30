@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { NextFunction, Request, Response } from "express"
 import gameServer from "../game/gameServer.js"
-import { server } from "../app.js"
 import { verifyPassword } from "../auth/password.js"
 import { adminPasswordHash, jwtSecret } from '../auth/secrets.js'
 import { Horse, IHorse, generateNewHorses } from '../models/Horse.js'
@@ -35,16 +34,19 @@ export async function getServerStatus(req: Request, res: Response, next: NextFun
     res.status(200).json({ serverStatus: gameServer.serverStatus })
 }
 
-export async function startRaceServer(req: Request, res: Response, next: NextFunction) {
-    gameServer.createServer(server)
+export async function openRaceServer(req: Request, res: Response, next: NextFunction) {
+    gameServer.openServer()
 
     res.status(200).json({ message: 'Server is now active' })
 }
 
-export async function stopRaceServer(req: Request, res: Response, next: NextFunction) {
-    gameServer.closeServer()
-
-    res.status(200).json({ message: 'Server is now inactive' })
+export async function closeRaceServer(req: Request, res: Response, next: NextFunction) {
+    try {
+        gameServer.closeServer()
+        res.status(200).json({ message: 'Server is now inactive' })
+    } catch (error) {
+        sendJSONError(res, 500, "Could not close the server")
+    }
 }
 
 export async function startRaceLoop(req: Request, res: Response, next: NextFunction) {
