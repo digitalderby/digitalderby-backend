@@ -9,6 +9,8 @@ import { BetInfo } from './betInfo.js'
 import jwt from 'jsonwebtoken'
 import { jwtSecret } from '../auth/secrets.js'
 import { server } from '../app.js'
+import GameLog from '../models/GameLog.js'
+import { User, UserSpec } from '../models/User.js'
 
 export const SERVER_TICK_RATE_MS = 100
 
@@ -83,29 +85,7 @@ export class GameServer {
 
         // For each client that connects to the server, set up the corresponding
         // event listeners.
-        this.io.of('/user').use((socket: Socket, next) => {
-            const token = socket.handshake.auth?.token ||
-                socket.handshake.headers?.token
-            if (token === undefined) {
-                next(new Error('Must provide token in either auth or headers'))
-                return
-            }
-
-            const payload = jwt.verify(token, jwtSecret)
-
-            if (typeof payload === 'string') {
-                next(new Error(`Could not parse JWT: ${payload}`))
-                return
-            }
-
-            if (payload.username === 'undefined') {
-                next(new Error(`JWT has a bad payload`))
-                return
-            }
-
-            socket.data = { username: payload.username }
-            next()
-        })
+        this.io.of('/user').use((socket, next) => (this.authMiddleware(socket, next)))
 
         this.io.of('/user').on('connection', (sk) => this.userHandler(sk))
         this.serverStatus = 'inactive'
@@ -120,15 +100,53 @@ export class GameServer {
         this.io.close()
         this.serverStatus = 'closed'
     }
+
+    async authMiddleware(socket: Socket, next: (err?: Error | undefined) => void) {
+        const token = socket.handshake.auth?.token ||
+            socket.handshake.headers?.token
+        if (token === undefined) {
+            next(new Error('Must provide token in either auth or headers'))
+            return
+        }
+
+        const payload = jwt.verify(token, jwtSecret)
+
+        if (typeof payload === 'string') {
+            next(new Error(`Could not parse JWT: ${payload}`))
+            return
+        }
+
+        if (payload.username === 'undefined') {
+            next(new Error(`JWT has a bad payload`))
+            return
+        }
+
+        let user: UserSpec | null
+        try {
+            user = await User.findOne({ username: payload.username })
+            if (!user) {
+                next(new Error(`Could not find user ${payload.username}`))
+                return
+            }
+        } catch (error) {
+            next(new Error(`Could not retrieve user from database`))
+            return
+        }
+
+        socket.data = { 
+            username: payload.username,
+            id: user._id,
+            wallet: user.profile.wallet
+        }
+
+        next()
+    }
     
     userHandler(socket: Socket) {
         console.log('in user handler')
         // Initially clients are unauthenticated. Clients may authenticate
         // themselves by sending a 'login' message to the server.
-        this.clients.set(socket.id, {
-            socket: socket,
-            username: socket.data.username
-        })
+        this.clients.set(socket.id, new ClientInfo(socket))
 
         // Log all events as they come in.
         socket.onAny((evt, ...args) => console.log(evt, args))
@@ -159,6 +177,14 @@ export class GameServer {
                 callback({
                     message: 'Not in betting mode'
                 })
+                return
+            }
+
+            if (this.race === null) {
+                callback({
+                    message: 'No race has started'
+                })
+                return
             }
 
             const currentBet = this.bets.get(clientInfo.username)
@@ -167,11 +193,21 @@ export class GameServer {
                 this.pool[currentBet.horseIdx] -= currentBet.betValue
             } 
 
-            this.bets.set(clientInfo.username, {
+            if (betValue > clientInfo.wallet) {
+                callback({
+                    message: 'Not enough balance to make bet'
+                })
+                return
+            }
+
+            this.bets.set(clientInfo.username, new BetInfo({
+                username: clientInfo.username,
+                id: clientInfo.id,
                 betValue: betValue,
                 horseIdx: horseIdx,
-                returns: 0,
-            })
+                horseId: this.race.horses[horseIdx].spec._id,
+            }))
+
             this.pool[horseIdx] += betValue
 
             callback({
@@ -263,6 +299,7 @@ export class GameServer {
         }
 
         // do persistence stuff
+        this.commitGame()
 
         this.notifyClientsOfBetResults()
     }
@@ -364,6 +401,27 @@ export class GameServer {
             if (bet === undefined) { continue }
             client.socket.emit('betResults', bet)
         }
+    }
+
+    async commitGame(): Promise<void> {
+        if (this.race === null || this.raceStates === null) { return }
+        const lastRaceState = this.raceStates[this.raceStates.length-1]
+
+        // Create a game log object in the database
+        const game = await GameLog.create({
+            horses: this.race.horses.map((h) => h.spec._id),
+            results: {
+                rankings: lastRaceState.rankings
+            }
+        })
+
+        // And then for each of the bets, commit the bet using the game
+        // log's id
+        await Promise.all(
+            [...this.bets.values()].map(async (bet) => {
+                await bet.commit(game._id) 
+            })
+        )
     }
 
     // Start the main server loop.

@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { sendJSONError } from "../errorHandler.js";
-import User from "../models/User.js";
+import { User } from "../models/User.js";
 
 export async function getAllUsers(
   req: Request,
