@@ -125,7 +125,13 @@ export class GameServer {
             return
         }
 
-        const payload = jwt.verify(token, jwtSecret)
+        let payload: jwt.JwtPayload | string
+        try {
+            payload = jwt.verify(token, jwtSecret)
+        } catch (error) {
+            next(new Error('Could not verify JWT.'))
+            return
+        }
 
         if (typeof payload === 'string') {
             console.log('Rejected: JWT was not parsed correctly')
