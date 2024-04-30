@@ -10,14 +10,14 @@ router.get('/bet-info/:username', async (req: Request, res: Response) => {
 
     try {
         // Find bet information for the specified user
-        const betInfo = await BetInfo.find({ username });
+        const betInfo = await BetInfo.findOne({ username });
 
         // If no bet information found, return 404 error
         if (!betInfo) {
             return res.status(404).json({ error: 'Bet information not found for the user' });
         }
 
-        // Return bet information as JSON response
+        // Return bet information as JSON 
         res.json(betInfo);
     } catch (err) {
         // Handle errors
