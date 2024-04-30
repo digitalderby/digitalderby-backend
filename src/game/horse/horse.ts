@@ -1,5 +1,4 @@
-import { Types } from "mongoose";
-import { IHorse } from "../../models/Horse.js";
+import { HorseSpec, } from "../../models/Horse.js";
 
 export const SPEED_BOUNDS = [50, 100]
 export const ACCELERATION_BOUNDS = [1,5]
@@ -11,13 +10,13 @@ function interpolate(specStatValue: number, bounds: Array<number>): number {
 }
 
 export class InternalHorse {
-    spec: IHorse & { _id: Types.ObjectId }
+    spec: HorseSpec
 
     topSpeed: number;
     stamina: number;
     acceleration: number;
 
-    constructor(horseSpec: IHorse & { _id: Types.ObjectId }) {
+    constructor(horseSpec: HorseSpec) {
         this.spec = horseSpec
 
         this.topSpeed = interpolate(horseSpec.stats.topSpeed, SPEED_BOUNDS)

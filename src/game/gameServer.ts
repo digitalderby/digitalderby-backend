@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken'
 import { jwtSecret } from '../auth/secrets.js'
 import { server } from '../app.js'
 import GameLog from '../models/GameLog.js'
+import { User, UserSpec } from '../models/User.js'
 
 export const SERVER_TICK_RATE_MS = 100
 
@@ -100,7 +101,7 @@ export class GameServer {
         this.serverStatus = 'closed'
     }
 
-    authMiddleware(socket: Socket, next: (err?: Error | undefined) => void) {
+    async authMiddleware(socket: Socket, next: (err?: Error | undefined) => void) {
         const token = socket.handshake.auth?.token ||
             socket.handshake.headers?.token
         if (token === undefined) {
@@ -120,7 +121,24 @@ export class GameServer {
             return
         }
 
-        socket.data = { username: payload.username }
+        let user: UserSpec | null
+        try {
+            user = await User.findOne({ username: payload.username })
+            if (!user) {
+                next(new Error(`Could not find user ${payload.username}`))
+                return
+            }
+        } catch (error) {
+            next(new Error(`Could not retrieve user from database`))
+            return
+        }
+
+        socket.data = { 
+            username: payload.username,
+            id: user._id,
+            wallet: user.profile.wallet
+        }
+
         next()
     }
     
@@ -128,10 +146,7 @@ export class GameServer {
         console.log('in user handler')
         // Initially clients are unauthenticated. Clients may authenticate
         // themselves by sending a 'login' message to the server.
-        this.clients.set(socket.id, {
-            socket: socket,
-            username: socket.data.username
-        })
+        this.clients.set(socket.id, new ClientInfo(socket))
 
         // Log all events as they come in.
         socket.onAny((evt, ...args) => console.log(evt, args))
@@ -162,6 +177,14 @@ export class GameServer {
                 callback({
                     message: 'Not in betting mode'
                 })
+                return
+            }
+
+            if (this.race === null) {
+                callback({
+                    message: 'No race has started'
+                })
+                return
             }
 
             const currentBet = this.bets.get(clientInfo.username)
@@ -170,11 +193,21 @@ export class GameServer {
                 this.pool[currentBet.horseIdx] -= currentBet.betValue
             } 
 
-            this.bets.set(clientInfo.username, {
+            if (betValue > clientInfo.wallet) {
+                callback({
+                    message: 'Not enough balance to make bet'
+                })
+                return
+            }
+
+            this.bets.set(clientInfo.username, new BetInfo({
+                username: clientInfo.username,
+                id: clientInfo.username,
                 betValue: betValue,
                 horseIdx: horseIdx,
-                returns: 0,
-            })
+                horseId: this.race.horses[horseIdx].spec._id,
+            }))
+
             this.pool[horseIdx] += betValue
 
             callback({

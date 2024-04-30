@@ -1,5 +1,5 @@
 import { Types } from "mongoose"
-import User from "../models/User.js"
+import { User } from "../models/User.js"
 
 export class BetInfo {
     username: string
@@ -12,13 +12,13 @@ export class BetInfo {
     // Returns
     returns: number = 0
 
-    constructor(
-        username: string,
-        id: string,
-        betValue: number,
-        horseIdx: number,
-        horseId: Types.ObjectId,
-    ) {
+    constructor({
+        username,
+        id,
+        betValue,
+        horseIdx,
+        horseId,
+    }) {
         this.username = username
         this.id = id
         this.betValue = betValue
