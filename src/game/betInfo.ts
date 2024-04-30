@@ -2,6 +2,9 @@ import { Types } from "mongoose"
 import { User } from "../models/User.js"
 
 export class BetInfo {
+    static find(arg0: { username: string }) {
+        throw new Error('Method not implemented.')
+    }
     username: string
     id: Types.ObjectId
     // Value of the bet
