@@ -122,8 +122,7 @@ export class GameServer {
     }
     
     userHandler(socket: Socket) {
-        console.log(`a user connected: ${socket.data}`)
-
+        console.log('in user handler')
         // Initially clients are unauthenticated. Clients may authenticate
         // themselves by sending a 'login' message to the server.
         this.clients.set(socket.id, {
@@ -215,6 +214,9 @@ export class GameServer {
                 message: 'ok',
             })
         })
+
+        console.log('emitting', socket.data.username)
+        socket.emit('username', socket.data.username)
     }
 
     startBettingMode() {
@@ -223,6 +225,7 @@ export class GameServer {
         this.bettingTimer = BETTING_DELAY * 1000
         this.raceStates = null
 
+        this.bets = new Map()
         this.pool = Array(HORSES_PER_RACE).fill(0)
         this.totalPool = 0
     }
@@ -258,6 +261,8 @@ export class GameServer {
                 bet.returns = bet.betValue * (this.totalPool/this.pool[bet.horseIdx])
             }
         }
+
+        // do persistence stuff
 
         this.notifyClientsOfBetResults()
     }
@@ -300,7 +305,9 @@ export class GameServer {
                 this.resultsTimer -= SERVER_TICK_RATE_MS
                 return
             }
+
             // start a new race if we're autorestarting
+            this.startBettingMode()
             break;
         }
     }
