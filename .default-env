@@ -1,0 +1,29 @@
+# Port to listen in on
+PORT=3000
+# Authentication secret for JWTs
+AUTH_SECRET="supersecretauthsecret"
+# Admin password
+ADMIN_PASSWORD="admin"
+# MongoDB database URI
+DATABASE_URI="mongodb+srv://localhost:27017"
+
+# Server tick rate
+SERVER_TICK_RATE_MS=100
+
+# Number of horses in the default horse population
+HORSE_POPULATION=100
+# Number of horses to have in a race
+HORSES_PER_RACE=4
+
+# Delay between betting mode beginning and a race starting
+BETTING_DELAY=20
+# Duration of race countdown timer
+PRERACE_DELAY=3
+# Delay between race ending 
+RESULTS_DELAY=10
+
+# Enables cheating (very first horse is always placed at the end of the track)
+# Set it to `"enabled"` to enable cheating.
+CHEAT_MODE=
+# Sets the length of the race
+RACE_LENGTH=500
