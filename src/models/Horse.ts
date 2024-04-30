@@ -65,7 +65,18 @@ export interface IHorse {
 }
 
 const horseStatsSchema = new mongoose.Schema<IHorseStats> ({
-
+    topSpeed: {
+        type: Number,
+        required: true,
+    },
+    stamina: {
+        type: Number,
+        required: true,
+    },
+    acceleration: {
+        type: Number,
+        required: true,
+    },
 })
 
 const horseSchema = new mongoose.Schema<IHorse> ({
@@ -81,7 +92,7 @@ const horseSchema = new mongoose.Schema<IHorse> ({
         required: true,
     },
     stats: {
-        type: Object,
+        type: horseStatsSchema,
         required: true,
     },
 }, { timestamps: true })
@@ -104,5 +115,7 @@ export function generateNewHorses(): IHorse[] {
             }
         })
 }
+
+export type HorseSpec = IHorse & { _id: Types.ObjectId }
 
 export const Horse = mongoose.model('Horse', horseSchema)
