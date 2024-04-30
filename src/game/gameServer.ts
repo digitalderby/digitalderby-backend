@@ -1,4 +1,5 @@
 import { Server as HTTPServer } from 'node:http'
+import corsSettings from './../cors.js'
 import { Socket, Server as SocketIOServer } from "socket.io"
 import { ClientInfo } from "../clientInfo.js"
 import { hrTimeMs } from "../time/time.js"
@@ -14,11 +15,9 @@ import { User, UserSpec } from '../models/User.js'
 
 export const SERVER_TICK_RATE_MS = 100
 
-export const BETTING_DELAY = 15
-export const PRERACE_DELAY = 3
-export const RESULTS_DELAY = 10
-
-export const DEFAULT_WALLET = 100
+export const BETTING_DELAY = Number(process.env.BETTING_DELAY) || 10
+export const PRERACE_DELAY = Number(process.env.PRERACE_DELAY) || 3
+export const RESULTS_DELAY = Number(process.env.RESULTS_DELAY) || 10
 
 const ServerInactiveError = {
     message: 'Server is inactive'
@@ -63,21 +62,14 @@ export class GameServer {
     /** Array of all race states */
     raceStates: Array<RaceState> | null = null
 
+    // TODO: add jsdocs
     createServer(server: HTTPServer) {
         if (this.serverStatus !== 'closed') { throw { message: 'Server already created' } }
 
         console.log('Creating server...')
         // Create a new Socket.IO server using the given HTTP connection.
         this.io = new SocketIOServer(server, {
-            cors: {
-                credentials: true,
-                origin: [
-                    // Vite React default origin
-                    'http://localhost:5173'
-
-                    // ... other origins here...
-                ]
-            }
+            cors: corsSettings
         })
 
         this.clients = new Map()
@@ -115,16 +107,20 @@ export class GameServer {
     }
 
     async closedMiddleware(socket: Socket, next: (err?: Error | undefined) => void) {
+        console.log('Handling inbound socket.')
         if (this.serverStatus === 'closed') {
+            console.log('Rejected: server is closed')
             next(new Error('Server is closed, cannot connect'))
         }
         next()
     }
 
     async authMiddleware(socket: Socket, next: (err?: Error | undefined) => void) {
+        console.log('Extracting socket\'s JWT.')
         const token = socket.handshake.auth?.token ||
             socket.handshake.headers?.token
         if (token === undefined) {
+            console.log('Rejected: JWT was not provided')
             next(new Error('Must provide token in either auth or headers'))
             return
         }
@@ -132,11 +128,13 @@ export class GameServer {
         const payload = jwt.verify(token, jwtSecret)
 
         if (typeof payload === 'string') {
+            console.log('Rejected: JWT was not parsed correctly')
             next(new Error(`Could not parse JWT: ${payload}`))
             return
         }
 
         if (payload.username === 'undefined') {
+            console.log('Rejected: JWT is not in the correct format')
             next(new Error(`JWT has a bad payload`))
             return
         }
@@ -145,10 +143,12 @@ export class GameServer {
         try {
             user = await User.findOne({ username: payload.username })
             if (!user) {
+                console.log('Rejected: Could not find user in the database')
                 next(new Error(`Could not find user ${payload.username}`))
                 return
             }
         } catch (error) {
+            console.log('Rejected: Could not find user due to database error')
             next(new Error(`Could not retrieve user from database`))
             return
         }
@@ -159,14 +159,17 @@ export class GameServer {
             wallet: user.profile.wallet
         }
 
+        console.log('Successfully authenticated the socket')
+        console.log(socket.data)
+
         next()
     }
     
     userHandler(socket: Socket) {
-        console.log('in user handler')
+        const clientInfo = new ClientInfo(socket)
         // Initially clients are unauthenticated. Clients may authenticate
         // themselves by sending a 'login' message to the server.
-        this.clients.set(socket.id, new ClientInfo(socket))
+        this.clients.set(socket.id, clientInfo)
 
         // Log all events as they come in.
         socket.onAny((evt, ...args) => console.log(evt, args))
@@ -271,11 +274,22 @@ export class GameServer {
             })
         })
 
-        console.log('emitting', socket.data.username)
+        console.log('Successfully set up event listeners')
         socket.emit('username', socket.data.username)
+        this.emitClientStatus(clientInfo)
+    }
+
+    emitClientStatus(client: ClientInfo) {
+        const payload = {
+            username: client.username,
+            id: client.id,
+            wallet: client.wallet,
+        }
+        client.socket.emit('clientStatus', payload)
     }
 
     startBettingMode() {
+        console.log('Entering betting mode')
         this.raceStatus = 'betting'
         this.race = createRace()
         this.bettingTimer = BETTING_DELAY * 1000
@@ -287,6 +301,7 @@ export class GameServer {
     }
 
     startRaceMode() {
+        console.log('Entering race mode')
         this.raceStatus = 'race'
         this.preRaceTimer = PRERACE_DELAY * 1000
         if (this.race === null) { throw new Error('no race') }
@@ -303,6 +318,7 @@ export class GameServer {
     }
 
     startResultsMode() {
+        console.log('Entering results mode')
         this.raceStatus = 'results'
         this.resultsTimer = RESULTS_DELAY * 1000
 
@@ -311,21 +327,17 @@ export class GameServer {
         // Get the end state of the race
         const lastState = this.raceStates[this.raceStates.length-1]
         for (const bet of this.bets.values()) {
-            // If we bet on the winning horse, get paid (total pool/pool in
-            // winning horse) for every dollar bet
+            // For each player who bet on the winning horse, pay them the total pool times the fraction they put on a given horse
             if (bet.horseIdx === lastState.rankings[0]) {
-                bet.returns = bet.betValue * (this.totalPool/this.pool[bet.horseIdx])
+                bet.returns = this.totalPool * Math.floor(bet.betValue / this.pool[bet.horseIdx])
             }
+            console.log(`Player ${bet.username} ${(bet.returns > 0) ? 'receives' : 'loses'} ${Math.abs(bet.returns)} from their bet on horse ${bet.horseIdx+1}`)
         }
 
         // do persistence stuff
         this.commitGame()
 
         this.notifyClientsOfBetResults()
-    }
-
-    handleAction(payload: any) {
-        console.log(payload)
     }
 
     handleTick(): void {
@@ -424,6 +436,7 @@ export class GameServer {
     }
 
     async commitGame(): Promise<void> {
+        console.log('Writing game results to database...')
         if (this.race === null || this.raceStates === null) { return }
         const lastRaceState = this.raceStates[this.raceStates.length-1]
 
@@ -434,6 +447,7 @@ export class GameServer {
                 rankings: lastRaceState.rankings
             }
         })
+        console.log('Successfully wrote game log to database ')
 
         // And then for each of the bets, commit the bet using the game
         // log's id
@@ -476,6 +490,8 @@ export class GameServer {
             }
         }
 
+        console.log('Starting main loop')
+
         runner()
     }
 
@@ -483,6 +499,7 @@ export class GameServer {
         if (this._loopCancelFunction === null) { return }
         this._loopCancelFunction()
         this.serverStatus = 'inactive'
+        console.log('Stopped main loop')
     }
 }
 

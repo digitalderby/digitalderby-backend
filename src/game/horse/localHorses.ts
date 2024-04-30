@@ -1,4 +1,4 @@
-import { Horse, HorseSpec } from "../../models/Horse.js";
+import { Horse, HorseSpec, generateNewHorses } from "../../models/Horse.js";
 import { randomIndicesNoReplacement } from "../../random/random.js";
 import { Race } from "../race.js";
 import { InternalHorse } from "./horse.js";
@@ -12,6 +12,25 @@ export let localHorses: InternalHorse[] = []
 export async function loadHorsesFromDatabase() {
     console.log('Loading horses from database...')
     const horseSpecs = await Horse.find()
+
+    if (horseSpecs.length !== HORSE_POPULATION) {
+        console.log('Not enough horses in database; regenerating them.')
+
+        // Delete all horses already in the database first
+        await Horse.deleteMany({})
+
+        let horses = generateNewHorses()
+            .map((h) => new Horse(h))
+
+        generateLocalHorsesFromSpecs(horses)
+
+        await Promise.all(horses.map((hm) => hm.save()))
+
+
+        console.log('Loading successful')
+        return
+    }
+
     localHorses = horseSpecs.map((hs) => new InternalHorse(hs))
     console.log('Loading successful')
 }

@@ -41,9 +41,12 @@ export async function openRaceServer(req: Request, res: Response, next: NextFunc
 }
 
 export async function closeRaceServer(req: Request, res: Response, next: NextFunction) {
-    gameServer.closeServer()
-
-    res.status(200).json({ message: 'Server is now inactive' })
+    try {
+        gameServer.closeServer()
+        res.status(200).json({ message: 'Server is now inactive' })
+    } catch (error) {
+        sendJSONError(res, 500, "Could not close the server")
+    }
 }
 
 export async function startRaceLoop(req: Request, res: Response, next: NextFunction) {
