@@ -1,5 +1,7 @@
 import mongoose, { Schema, Types } from "mongoose"
 
+export const DEFAULT_WALLET = Number(process.env.DEFAULT_WALLET) || 100
+
 interface IUser {
     username: string,
     passwordHash: string,

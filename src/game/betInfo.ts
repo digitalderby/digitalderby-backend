@@ -55,5 +55,7 @@ export class BetInfo {
                 }
             },
         )
+
+        console.log('Successfully wrote the bet to database')
     }
 }

@@ -50,7 +50,6 @@ export function randomIndicesNoReplacement(n: number, k: number): Array<number> 
         arr[i] = arr[j]
         arr[j] = tmp
     }
-    console.log(arr)
     return arr.slice(0, k)
 }
 

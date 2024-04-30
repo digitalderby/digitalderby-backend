@@ -1,11 +1,12 @@
 import 'dotenv/config'
 import express from 'express'
 import { createServer } from 'node:http'
-import './game/gameServer.js'
+import gameServer from './game/gameServer.js'
 
 import './config/database.js'
 
 import cors from 'cors'
+import corsSettings from './cors.js'
 import logger from 'morgan'
 
 import AdminRouter from './routes/admin.js'
@@ -32,13 +33,6 @@ const app = express()
 export const server = createServer(app)
 
 const PORT = process.env.PORT || 3000
-
-const corsSettings = {
-    credentials: true,
-    origin: [
-        'http://localhost:5173',
-    ]
-}
 
 
 app.use(logger('dev'))
@@ -67,6 +61,8 @@ app.use(
     swaggerUi.serve,
     swaggerUi.setup(YAML.load('./api-docs.yaml'), swaggerOptions)
 )
+
+gameServer.createServer(server)
 
 server.listen(PORT, () => {
     console.log(`listening at http://localhost:${PORT}`)

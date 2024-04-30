@@ -8,8 +8,8 @@ import {
     toggleAutostart,
     getServerStatus,
     startRaceLoop,
-    startRaceServer,
-    stopRaceServer
+    openRaceServer,
+    closeRaceServer
 } from '../controllers/admin.js'
 
 const router = express.Router()
@@ -20,8 +20,8 @@ router.get('/settings', loggedInAsAdmin, getServerSettings)
 router.get('/serverStatus', getServerStatus)
 router.post('/autostart', loggedInAsAdmin, toggleAutostart)
 
-router.post('/startRaceServer', loggedInAsAdmin, startRaceServer)
-router.post('/stopRaceServer', loggedInAsAdmin, stopRaceServer)
+router.post('/startRaceServer', loggedInAsAdmin, openRaceServer)
+router.post('/stopRaceServer', loggedInAsAdmin, closeRaceServer)
 
 router.post('/startRaceLoop', loggedInAsAdmin, startRaceLoop)
 router.post('/startRaceAndAutostart', loggedInAsAdmin, startRaceAndAutostart)
