@@ -202,7 +202,7 @@ export class GameServer {
 
             this.bets.set(clientInfo.username, new BetInfo({
                 username: clientInfo.username,
-                id: clientInfo.username,
+                id: clientInfo.id,
                 betValue: betValue,
                 horseIdx: horseIdx,
                 horseId: this.race.horses[horseIdx].spec._id,
@@ -299,6 +299,7 @@ export class GameServer {
         }
 
         // do persistence stuff
+        this.commitGame()
 
         this.notifyClientsOfBetResults()
     }

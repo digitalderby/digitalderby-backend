@@ -105,6 +105,4 @@ export function generateNewHorses(): IHorse[] {
         })
 }
 
-export type HorseSpec = IHorse & { _id: Types.ObjectId }
-
 export const Horse = mongoose.model('Horse', horseSchema)

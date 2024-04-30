@@ -3,7 +3,7 @@ import { User } from "../models/User.js"
 
 export class BetInfo {
     username: string
-    id: string
+    id: Types.ObjectId
     // Value of the bet
     betValue: number
     // Horse that they have bet on
@@ -18,6 +18,12 @@ export class BetInfo {
         betValue,
         horseIdx,
         horseId,
+    }: {
+        username: string,
+        id: Types.ObjectId,
+        betValue: number,
+        horseIdx: number,
+        horseId: Types.ObjectId,
     }) {
         this.username = username
         this.id = id
