@@ -1,8 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { NextFunction, Request, Response } from "express";
-import { User } from "../models/User.js";
+import { DEFAULT_WALLET, User } from "../models/User.js";
 import { saltPassword, verifyPassword } from "../auth/password.js";
-import { DEFAULT_WALLET } from "../game/gameServer.js";
 import { jwtSecret } from '../auth/secrets.js';
 import { markDeletedUser } from '../auth/tokens.js';
 import { sendJSONError } from '../errorHandler.js';
