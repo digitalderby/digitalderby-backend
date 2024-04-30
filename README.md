@@ -14,6 +14,12 @@ Backend for the Digital Derby
 | SwaggerUI | Live API documentation generated from a configuration file                      |
 | Heroku    | Platform-as-a-service used to deploy this application                           |
 
+## Contributors
+[https://github.com/dfergusbrown](https://github.com/dfergusbrown)
+[https://github.com/Fekinox](https://github.com/Fekinox)
+[https://github.com/vitrineofcode](https://github.com/vitrineofcode)
+[https://github.com/nebstech](https://github.com/nebstech)
+
 
 ## Build Instructions
 
