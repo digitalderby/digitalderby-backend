@@ -13,7 +13,6 @@ export async function loadHorsesFromDatabase() {
     console.log('Loading horses from database...')
     const horseSpecs = await Horse.find()
     localHorses = horseSpecs.map((hs) => new InternalHorse(hs))
-    console.log(localHorses)
     console.log('Loading successful')
 }
 

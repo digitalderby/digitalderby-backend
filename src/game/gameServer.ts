@@ -66,7 +66,7 @@ export class GameServer {
     createServer(server: HTTPServer) {
         if (this.serverStatus !== 'closed') { throw { message: 'Server already created' } }
 
-        console.log('creating server')
+        console.log('Creating server...')
         // Create a new Socket.IO server using the given HTTP connection.
         this.io = new SocketIOServer(server, {
             cors: {
@@ -85,20 +85,40 @@ export class GameServer {
 
         // For each client that connects to the server, set up the corresponding
         // event listeners.
+        this.io.of('/user').use((socket, next) => (this.closedMiddleware(socket, next)))
         this.io.of('/user').use((socket, next) => (this.authMiddleware(socket, next)))
 
         this.io.of('/user').on('connection', (sk) => this.userHandler(sk))
-        this.serverStatus = 'inactive'
 
+        console.log('Server successfully created')
+
+        this.openServer()
+    }
+
+    openServer() {
+        this.serverStatus = 'inactive'
         this.startBettingMode()
+
+        this.clients = new Map()
+        console.log('Server is now open')
     }
 
     closeServer() {
         if (this.io === null) { throw { message: 'Server already closed' } }
         this.stopMainLoop()
 
-        this.io.close()
+        console.log('Disconnecting all clients...')
+        this.io.of('/user').disconnectSockets()
+        this.clients = new Map()
         this.serverStatus = 'closed'
+        console.log('Server is now closed')
+    }
+
+    async closedMiddleware(socket: Socket, next: (err?: Error | undefined) => void) {
+        if (this.serverStatus === 'closed') {
+            next(new Error('Server is closed, cannot connect'))
+        }
+        next()
     }
 
     async authMiddleware(socket: Socket, next: (err?: Error | undefined) => void) {

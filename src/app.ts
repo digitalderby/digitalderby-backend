@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import { createServer } from 'node:http'
-import './game/gameServer.js'
+import gameServer from './game/gameServer.js'
 
 import './config/database.js'
 
@@ -67,6 +67,8 @@ app.use(
     swaggerUi.serve,
     swaggerUi.setup(YAML.load('./api-docs.yaml'), swaggerOptions)
 )
+
+gameServer.createServer(server)
 
 server.listen(PORT, () => {
     console.log(`listening at http://localhost:${PORT}`)
