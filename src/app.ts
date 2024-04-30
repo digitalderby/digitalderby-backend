@@ -1,8 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import { createServer } from 'node:http'
-import gameServer from './game/gameServer.js'
-import gameDatabase from './game/gameDatabase.js'
+import './game/gameServer.js'
 
 import './config/database.js'
 
@@ -71,4 +70,5 @@ app.use(
 
 server.listen(PORT, () => {
     console.log(`listening at http://localhost:${PORT}`)
+    console.log(`Access api documentation at http://localhost:${PORT}/api-docs`)
 })

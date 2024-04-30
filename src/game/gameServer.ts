@@ -1,14 +1,18 @@
 import { Server as HTTPServer } from 'node:http'
 import { Socket, Server as SocketIOServer } from "socket.io"
 import { ClientInfo } from "../clientInfo.js"
-import gameDatabase from "./gameDatabase.js"
 import { hrTimeMs } from "../time/time.js"
-import { Race } from './race.js'
+import { RACE_DURATION, Race } from './race.js'
 import { RaceState } from './raceState.js'
+import { HORSES_PER_RACE, createRace } from './horse/localHorses.js'
+import { BetInfo } from './betInfo.js'
+import jwt from 'jsonwebtoken'
+import { jwtSecret } from '../auth/secrets.js'
+import { server } from '../app.js'
 
 export const SERVER_TICK_RATE_MS = 100
 
-export const BETTING_DELAY = 10
+export const BETTING_DELAY = 15
 export const PRERACE_DELAY = 3
 export const RESULTS_DELAY = 10
 
@@ -26,6 +30,9 @@ export class GameServer {
     /** Map between the Socket.IO ids of each client and a container
     *   for their client info */
     clients: Map<string, ClientInfo> = new Map()
+    bets: Map<string, BetInfo> = new Map()
+    pool: number[] = []
+    totalPool: number = 0
 
     messages: Array<string> = []
 
@@ -40,7 +47,7 @@ export class GameServer {
     * Race - Race is being simulated.
     * Results - Race has finished, and the game server will simply display
     * the finished status. */
-    status: 'betting' | 'race' | 'results' = 'betting'
+    raceStatus: 'betting' | 'race' | 'results' = 'betting'
 
     /** Timer that ticks down to zero in betting mode before a race begins. */
     bettingTimer: number = 0
@@ -50,7 +57,6 @@ export class GameServer {
     resultsTimer: number = 0
 
     _loopCancelFunction: (() => void) | null = null
-    _pauseFunction: (() => void) | null = null
 
     /** Array of all race states */
     raceStates: Array<RaceState> | null = null
@@ -77,7 +83,31 @@ export class GameServer {
 
         // For each client that connects to the server, set up the corresponding
         // event listeners.
-        this.io.of('/').on('connection', (sk) => this.userHandler(sk))
+        this.io.of('/user').use((socket: Socket, next) => {
+            const token = socket.handshake.auth?.token ||
+                socket.handshake.headers?.token
+            if (token === undefined) {
+                next(new Error('Must provide token in either auth or headers'))
+                return
+            }
+
+            const payload = jwt.verify(token, jwtSecret)
+
+            if (typeof payload === 'string') {
+                next(new Error(`Could not parse JWT: ${payload}`))
+                return
+            }
+
+            if (payload.username === 'undefined') {
+                next(new Error(`JWT has a bad payload`))
+                return
+            }
+
+            socket.data = { username: payload.username }
+            next()
+        })
+
+        this.io.of('/user').on('connection', (sk) => this.userHandler(sk))
         this.serverStatus = 'inactive'
 
         this.startBettingMode()
@@ -90,130 +120,151 @@ export class GameServer {
         this.io.close()
         this.serverStatus = 'closed'
     }
-
-    guestHandler(socket: Socket) {
-        console.log('a user connected')
-        console.log(socket)
-
-        // Initially clients are unauthenticated. Clients may authenticate
-        // themselves by sending a 'login' message to the server.
-        this.clients.set(socket.id, {
-            socket: socket,
-            authed: false,
-            username: ''
-        })
-
-        // Log all events as they come in.
-        socket.onAny((evt, ...args) => console.log(evt, args))
-
-        // Client attempted to login.
-        socket.on('login', ({ username }, cb) => {
-            let clientInfo = this.clients.get(socket.id)
-            // If client doesn't exist somehow, inform client that
-            // their info isn't in the list of clients in the server.
-            if (clientInfo === undefined) {
-                cb({
-                    message: 'not in client listing'
-                })
-                return
-            }
-            clientInfo.authed = true
-            clientInfo.username = username
-            // Inform user that authentication was successful
-            cb({
-                message: 'ok'
-            })
-        })
-
-        // Client attempted to logout.
-        socket.on('logout', () => {
-            let clientInfo = this.clients.get(socket.id)
-            if (clientInfo === undefined) { return }
-            clientInfo.authed = false
-            clientInfo.username = ''
-        })
-
-        // Client closed the connection.
-        socket.on('disconnect', () => {
-            this.clients.delete(socket.id)
-        })
-
-        // Client sent an action to the server.
-        socket.on('action', (payload) => {
-            this.handleAction(payload)
-        })
-    }
     
     userHandler(socket: Socket) {
-        console.log('a user connected')
-        console.log(socket)
-
+        console.log('in user handler')
         // Initially clients are unauthenticated. Clients may authenticate
         // themselves by sending a 'login' message to the server.
         this.clients.set(socket.id, {
             socket: socket,
-            authed: false,
-            username: ''
+            username: socket.data.username
         })
 
         // Log all events as they come in.
         socket.onAny((evt, ...args) => console.log(evt, args))
-
-        // Client attempted to login.
-        socket.on('login', ({ username }, cb) => {
-            let clientInfo = this.clients.get(socket.id)
-            // If client doesn't exist somehow, inform client that
-            // their info isn't in the list of clients in the server.
-            if (clientInfo === undefined) {
-                cb({
-                    message: 'not in client listing'
-                })
-                return
-            }
-            clientInfo.authed = true
-            clientInfo.username = username
-            // Inform user that authentication was successful
-            cb({
-                message: 'ok'
-            })
-        })
-
-        // Client attempted to logout.
-        socket.on('logout', () => {
-            let clientInfo = this.clients.get(socket.id)
-            if (clientInfo === undefined) { return }
-            clientInfo.authed = false
-            clientInfo.username = ''
-        })
 
         // Client closed the connection.
         socket.on('disconnect', () => {
             this.clients.delete(socket.id)
         })
 
-        // Client sent an action to the server.
-        socket.on('action', (payload) => {
-            this.handleAction(payload)
+        // Client places a bet on a given horse
+        socket.on('bet', ({ betValue, horseIdx }, res) => {
+            let callback = res
+            if (callback === undefined) {
+                callback = (payload: any) => {
+                    socket.emit('debuglog', payload)
+                }
+            }
+
+            let clientInfo = this.clients.get(socket.id)
+            if (clientInfo === undefined) {
+                callback({
+                    message: 'Not in client listing'
+                })
+                return
+            }
+
+            if (this.raceStatus !== 'betting') {
+                callback({
+                    message: 'Not in betting mode'
+                })
+            }
+
+            const currentBet = this.bets.get(clientInfo.username)
+            if (currentBet !== undefined) {
+                this.bets.delete(clientInfo.username)
+                this.pool[currentBet.horseIdx] -= currentBet.betValue
+            } 
+
+            this.bets.set(clientInfo.username, {
+                betValue: betValue,
+                horseIdx: horseIdx,
+                returns: 0,
+            })
+            this.pool[horseIdx] += betValue
+
+            callback({
+                message: 'ok',
+                betValue: betValue,
+                horseIdx: horseIdx,
+            })
         })
+
+        // Player clears their bet
+        socket.on('clearBet', (res) => {
+            let callback = res
+            if (callback === undefined) {
+                callback = (payload: any) => {
+                    socket.emit('debuglog', payload)
+                }
+            }
+
+            let clientInfo = this.clients.get(socket.id)
+            if (clientInfo === undefined) {
+                res({
+                    message: 'Not in client listing'
+                })
+                return
+            }
+
+            if (this.raceStatus !== 'betting') {
+                res({
+                    message: 'Not in betting mode'
+                })
+            }
+
+            const currentBet = this.bets.get(clientInfo.username)
+            if (currentBet !== undefined) {
+                this.bets.delete(clientInfo.username)
+                this.pool[currentBet.horseIdx] -= currentBet.betValue
+            } 
+
+            res({
+                message: 'ok',
+            })
+        })
+
+        console.log('emitting', socket.data.username)
+        socket.emit('username', socket.data.username)
     }
 
     startBettingMode() {
-        this.status = 'betting'
-        this.race = gameDatabase.createRace()
+        this.raceStatus = 'betting'
+        this.race = createRace()
         this.bettingTimer = BETTING_DELAY * 1000
         this.raceStates = null
+
+        this.bets = new Map()
+        this.pool = Array(HORSES_PER_RACE).fill(0)
+        this.totalPool = 0
     }
 
     startRaceMode() {
-        this.status = 'race'
+        this.raceStatus = 'race'
         this.preRaceTimer = PRERACE_DELAY * 1000
         if (this.race === null) { throw new Error('no race') }
+
+        for (let i = 0; i < HORSES_PER_RACE; i++) {
+            this.totalPool += this.pool[i] * 2
+        }
+
+        console.log(`Current pool: ${this.pool}`)
+        console.log(`Total: ${this.totalPool}`)
+
         this.raceStates = [new RaceState(this.race)]
+        this.raceStates[0].horseStates[0].position = RACE_DURATION-1
     }
 
     startResultsMode() {
-        this.status = 'results'
+        this.raceStatus = 'results'
         this.resultsTimer = RESULTS_DELAY * 1000
+
+        if (this.raceStates === null) { throw new Error('Could not enter results mode') }
+
+        // Get the end state of the race
+        const lastState = this.raceStates[this.raceStates.length-1]
+        for (const bet of this.bets.values()) {
+            // If we bet on the winning horse, get paid (total pool/pool in
+            // winning horse) for every dollar bet
+            if (bet.horseIdx === lastState.rankings[0]) {
+                bet.returns = bet.betValue * (this.totalPool/this.pool[bet.horseIdx])
+            }
+        }
+
+        // do persistence stuff
+
+        this.notifyClientsOfBetResults()
     }
 
     handleAction(payload: any) {
@@ -221,7 +272,7 @@ export class GameServer {
     }
 
     handleTick(): void {
-        switch(this.status) {
+        switch(this.raceStatus) {
         case 'betting':
             if (this.bettingTimer > 0) {
                 this.bettingTimer -= SERVER_TICK_RATE_MS
@@ -254,7 +305,9 @@ export class GameServer {
                 this.resultsTimer -= SERVER_TICK_RATE_MS
                 return
             }
+
             // start a new race if we're autorestarting
+            this.startBettingMode()
             break;
         }
     }
@@ -262,24 +315,24 @@ export class GameServer {
     emitState(lag: bigint): void {
         if (this.io === null) { throw ServerInactiveError }
 
-        switch(this.status) {
+        switch(this.raceStatus) {
         case 'betting':
-            this.io.emit('gamestate', {
-                status: this.status,
+            this.io.of('/user').emit('gamestate', {
+                status: this.raceStatus,
                 clients: [...this.clients.keys()],
                 messages: this.messages,
-                lag: Number(lag) - SERVER_TICK_RATE_MS,
+                lag: Number(lag),
 
                 race: this.race,
                 bettingTimer: this.bettingTimer
             })
             break;
         case 'race':
-            this.io.emit('gamestate', {
-                status: this.status,
+            this.io.of('/user').emit('gamestate', {
+                status: this.raceStatus,
                 clients: [...this.clients.keys()],
                 messages: this.messages,
-                lag: Number(lag) - SERVER_TICK_RATE_MS,
+                lag: Number(lag),
 
                 preRaceTimer: this.preRaceTimer,
                 raceStates:
@@ -289,11 +342,11 @@ export class GameServer {
             })
             break;
         case 'results':
-            this.io.emit('gamestate', {
-                status: this.status,
+            this.io.of('/user').emit('gamestate', {
+                status: this.raceStatus,
                 clients: [...this.clients.keys()],
                 messages: this.messages,
-                lag: Number(lag) - SERVER_TICK_RATE_MS,
+                lag: Number(lag),
 
                 resultsTimer: this.resultsTimer,
                 raceStates:
@@ -305,10 +358,19 @@ export class GameServer {
         }
     }
 
+    notifyClientsOfBetResults(): void {
+        for (const client of this.clients.values()) {
+            const bet = this.bets.get(client.username)
+            if (bet === undefined) { continue }
+            client.socket.emit('betResults', bet)
+        }
+    }
+
     // Start the main server loop.
     startMainLoop() {
         this.prevTime = hrTimeMs()
         let cancel = false
+        this._loopCancelFunction = () => { cancel = true }
 
         this.serverStatus = 'active'
 
@@ -329,7 +391,6 @@ export class GameServer {
                 this.handleTick()
                 this.lag -= BigInt(SERVER_TICK_RATE_MS)
                 dirty = true
-                console.log(this.lag)
             }
 
             if (dirty) {

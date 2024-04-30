@@ -1,11 +1,11 @@
-import { Horse } from "./horse/horse.js";
+import { InternalHorse } from "./horse/horse.js";
 
-export const RACE_DURATION = 10000
+export const RACE_DURATION = 500
 
 export class Race {
-    horses: Array<Horse>;
+    horses: Array<InternalHorse>;
 
-    constructor(horses: Array<Horse>) {
+    constructor(horses: Array<InternalHorse>) {
         this.horses = horses 
     }
 }

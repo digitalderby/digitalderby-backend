@@ -1,4 +1,4 @@
-import { Horse } from "./horse/horse.js"
+import { InternalHorse } from "./horse/horse.js"
 import { RACE_DURATION, Race } from "./race.js"
 import { SERVER_TICK_RATE_MS } from "./gameServer.js"
 
@@ -45,11 +45,7 @@ export class RaceState {
         this.rankings.sort((idxI, idxJ) => {
             const horseI = this.horseStates[idxI]
             const horseJ = this.horseStates[idxJ]
-            const posDifference = 
-                horseI.position - horseJ.position
-            if (Math.abs(posDifference) > 0.01) {
-                return posDifference
-            } else if (horseI.finishTime !== null && horseJ.finishTime !== null) {
+            if (horseI.finishTime !== null && horseJ.finishTime !== null) {
                 if (Math.abs(horseI.finishTime - horseJ.finishTime) > 0) {
                     return horseI.finishTime - horseJ.finishTime
                 } else {
@@ -60,7 +56,11 @@ export class RaceState {
             } else if (horseJ.finishTime !== null) {
                 return 1
             } else {
-                return idxI - idxJ
+                if (Math.abs(horseI.position - horseJ.position) > 0) {
+                    return horseJ.position - horseI.position
+                } else {
+                    return idxI - idxJ
+                }
             }
         })
     }
@@ -71,12 +71,13 @@ export class RaceState {
 }
 
 export class HorseState {
-    horse: Horse 
+    horse: InternalHorse 
+
     position: number = 0
     currentSpeed: number = 0
     finishTime: number | null = null
 
-    constructor(horse: Horse) {
+    constructor(horse: InternalHorse) {
         this.horse = horse
     }
 }
