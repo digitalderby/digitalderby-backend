@@ -23,6 +23,95 @@ console.log(`Betting delay: ${BETTING_DELAY}`)
 console.log(`Pre-race delay: ${PRERACE_DELAY}`)
 console.log(`Results delay: ${RESULTS_DELAY}`)
 
+export interface raceDetailsSchema {
+    // Name of the horse.
+    horseName: string,
+    // ID of the horse.
+    horseId: string,
+    // Color of the horse.
+    horseColor: string,
+    // Icons of the horse.
+    horseIcons: string[],
+    // Length of the race in units.
+    raceLength: string,
+}
+
+export interface betStateSchema {
+    // Current status- use this to discriminate between the different
+    // game states.
+    status: 'betting',
+    // Number of connected clients.
+    numClients: number,
+    lag: number,
+
+    // Currently queued race- information on each specific horse.
+    race: raceDetailsSchema,
+    // Timestamp representing when the next race will start.
+    raceStartTime: Date,
+    // Current value of the betting pool.
+    currentPoolValue: number,
+}
+
+export interface raceStateSchema {
+    // Current status- use this to discriminate between the different
+    // game states.
+    status: 'race',
+    // Number of connected clients.
+    numClients: number,
+    lag: number,
+
+    // Currently queued race- information on each specific horse.
+    race: raceDetailsSchema,
+    // Timestamp representing when the horse simulation will begin. Will
+    // be null if the race has already started.
+    preraceStartTime?: Date,
+    // Current value of the betting pool.
+    currentPoolValue: number,
+
+    // Array of event messages sent from the server when an event happens
+    // during the race.
+    eventMessages: string[]
+
+    // Current state of the race.
+    raceState: {
+        // Instantaneous state of a given horse. Uses the same indices as a race,
+        // so raceState.horseStates[0] refers to the same horse as race.horses[0].
+        horseStates: {
+            // Current position of the horse.
+            position: number,
+            // Current speed of the horse.
+            speed: number,
+            // Whether or not the horse has finished the race.
+            isFinished: boolean,
+            // Time that the horse has finished the race.
+            finishTime?: number,
+        }[]
+        // An array where the 0th index is the index of the horse in 1st place,
+        // the 1st index is the index of the horse in 2nd place, etc.
+        rankings: number[]
+    }
+}
+
+export interface resultsSchema {
+    // Current status- use this to discriminate between the different
+    // game states.
+    status: 'race',
+    // Number of connected clients.
+    numClients: number,
+    lag: number,
+
+    // Currently queued race- information on each specific horse.
+    race: raceDetailsSchema,
+    // Timestamp representing when the next race will begin.
+    nextRaceStartTime: Date,
+    // Current value of the betting pool.
+    currentPoolValue: number,
+
+    // Rankings of each horse: rankings[0] is the index of the horse in 1st,
+    // rankings[1] is the index of the horse in 2nd, etc.
+    rankings: number[],
+}
+
 const ServerInactiveError = {
     message: 'Server is inactive'
 }
@@ -391,7 +480,7 @@ export class GameServer {
         }
     }
 
-    emitState(lag: bigint): void {
+    emitStateV1(lag: bigint): void {
         if (this.io === null) { throw ServerInactiveError }
 
         switch(this.raceStatus) {
@@ -496,7 +585,7 @@ export class GameServer {
             }
 
             if (dirty) {
-                this.emitState(this.lag)
+                this.emitStateV1(this.lag)
             }
         }
 
