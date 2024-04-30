@@ -19,6 +19,10 @@ export const BETTING_DELAY = Number(process.env.BETTING_DELAY) || 10
 export const PRERACE_DELAY = Number(process.env.PRERACE_DELAY) || 3
 export const RESULTS_DELAY = Number(process.env.RESULTS_DELAY) || 10
 
+console.log(`Betting delay: ${BETTING_DELAY}`)
+console.log(`Pre-race delay: ${PRERACE_DELAY}`)
+console.log(`Results delay: ${RESULTS_DELAY}`)
+
 const ServerInactiveError = {
     message: 'Server is inactive'
 }
