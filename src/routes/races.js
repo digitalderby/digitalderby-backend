@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var express_1 = require("express");
+var dummyHandler_js_1 = require("../dummyHandler.js");
+var router = express_1.Router();
+router.get('/', dummyHandler_js_1.default);
+router.get('/lastGame', dummyHandler_js_1.default);
+router.get('/:id', dummyHandler_js_1.default);
+router.get('/:id/horses', dummyHandler_js_1.default);
+exports.default = router;

@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var express_1 = require("express");
+var authentication_js_1 = require("../auth/authentication.js");
+var auth_js_1 = require("../controllers/auth.js");
+var readonly_js_1 = require("../readonly.js");
+var router = express_1.Router(); 
+router.post('/login', auth_js_1.loginAsUser);
+router.post('/signup', readonly_js_1.disabledInReadOnlyMode, auth_js_1.signup);
+router.delete('/deleteAccount', authentication_js_1.loggedInAsUser, auth_js_1.deleteAccount);
+exports.default = router;
