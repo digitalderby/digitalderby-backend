@@ -6,6 +6,7 @@ export class RaceState {
     horseStates: Array<HorseState> = []
     rankings: Array<number> = []
     time: number = 0
+    length: number = RACE_LENGTH
 
     constructor(race?: Race) {
         if (race) {
