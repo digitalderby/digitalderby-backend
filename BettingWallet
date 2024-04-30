@@ -34,3 +34,5 @@ let myWallet = new BettingWallet(100); // Starting with $100
 myWallet.placeBet(50); // Trying to bet $50
 myWallet.addWinnings(75); // Adding winnings of $75, which will be doubled to $150
 console.log(`Final balance: $${myWallet.getBalance()}`); // Display final balance
+
+
