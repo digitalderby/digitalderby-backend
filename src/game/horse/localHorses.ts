@@ -1,4 +1,4 @@
-import { Horse, IHorse } from "../../models/Horse.js";
+import { Horse, HorseSpec } from "../../models/Horse.js";
 import { randomIndicesNoReplacement } from "../../random/random.js";
 import { Race } from "../race.js";
 import { InternalHorse } from "./horse.js";
@@ -13,6 +13,7 @@ export async function loadHorsesFromDatabase() {
     console.log('Loading horses from database...')
     const horseSpecs = await Horse.find()
     localHorses = horseSpecs.map((hs) => new InternalHorse(hs))
+    console.log(localHorses)
     console.log('Loading successful')
 }
 
@@ -22,7 +23,7 @@ export async function loadHorsesFromDatabase() {
  *
  * @param {IHorse[]} horseSpecs - Array of horse specs from the database
  */
-export function generateLocalHorsesFromSpecs(horseSpecs: IHorse[]) {
+export function generateLocalHorsesFromSpecs(horseSpecs: HorseSpec[]) {
     console.log('Recreating local horse collection')
     localHorses = horseSpecs.map((hs) => new InternalHorse(hs))
     console.log('Finished recreating local horse collection')

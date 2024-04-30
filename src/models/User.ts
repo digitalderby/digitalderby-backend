@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose"
+import mongoose, { Schema, Types } from "mongoose"
 
 interface IUser {
     username: string,
@@ -66,4 +66,6 @@ const userSchema = new mongoose.Schema<IUser>({
     profile: profileSchema,
 })
 
-export default mongoose.model('User', userSchema)
+export type UserSpec = IUser & { _id: Types.ObjectId }
+
+export const User = mongoose.model('User', userSchema)

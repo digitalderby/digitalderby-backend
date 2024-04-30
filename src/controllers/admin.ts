@@ -66,8 +66,8 @@ export async function toggleAutostart(req: Request, res: Response, next: NextFun
 }
 
 export async function createNewHorses(req: Request, res: Response, next: NextFunction) {
-    // Delete all horses already in the database first
     try {
+        // Delete all horses already in the database first
         await Horse.deleteMany({})
 
         let horses = generateNewHorses()

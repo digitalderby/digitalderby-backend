@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose, { Types } from 'mongoose'
 import { randRange, randomIndicesNoReplacement, rollDiceDropLowest } from '../random/random.js'
 import { HORSE_POPULATION } from '../game/horse/localHorses.js'
 
@@ -105,4 +105,4 @@ export function generateNewHorses(): IHorse[] {
         })
 }
 
-export const Horse = mongoose.model('GameLog', horseSchema)
+export const Horse = mongoose.model('Horse', horseSchema)
