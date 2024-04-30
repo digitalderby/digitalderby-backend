@@ -105,4 +105,4 @@ export function generateNewHorses(): IHorse[] {
         })
 }
 
-export const Horse = mongoose.model('GameLog', horseSchema)
+export const Horse = mongoose.model('Horse', horseSchema)
