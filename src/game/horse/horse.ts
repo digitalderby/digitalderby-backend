@@ -1,3 +1,4 @@
+import { SERVER_TICK_RATE_MS } from "../../config/globalsettings.js";
 import { HorseSpec, } from "../../models/Horse.js";
 
 export const LOW_SPEED_BOUNDS = [400, 450]
@@ -6,8 +7,15 @@ export const HIGH_SPEED_BOUNDS = [800, 900]
 export const ACCELERATION_BOUNDS = [400,440]
 export const STAMINA_BOUNDS = [180, 220]
 
+export const STAMINA_THRESHOLD = 500
+
 export const DECELERATION = 12
 export const MODE_DURATION = 4000
+
+export const TRIP_LOW_SPEED = 500
+export const TRIP_HIGH_SPEED = 1200
+export const TRIP_PROBABILITY = (SERVER_TICK_RATE_MS/(1000 * 20))
+export const TRIP_DURATION_MS = 1000
 
 function interpolate(specStatValue: number, bounds: Array<number>): number {
     const normalized = (specStatValue - 3)/17

@@ -497,8 +497,9 @@ export class GameServer {
                 this.startResultsMode()
                 return
             }
+            if (this.race === null) { throw new Error('no race') }
 
-            const nextState = currentState.nextState()
+            const nextState = currentState.nextState(this.race)
             this.raceStates.push(nextState)
             break;
         case 'results':

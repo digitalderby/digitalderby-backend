@@ -1,5 +1,5 @@
 import { RACE_LENGTH, SERVER_TICK_RATE_MS } from "../config/globalsettings.js"
-import { DECELERATION, InternalHorse, MODE_DURATION } from "./horse/horse.js"
+import { DECELERATION, InternalHorse, MODE_DURATION, STAMINA_THRESHOLD, TRIP_DURATION_MS, TRIP_HIGH_SPEED, TRIP_LOW_SPEED, TRIP_PROBABILITY } from "./horse/horse.js"
 import { Race } from "./race.js"
 
 const dt = SERVER_TICK_RATE_MS/1000
@@ -16,6 +16,11 @@ type SpeedFactor = {
     staminaPercent: number,
     placement: number,
     positionPercent: number,
+}
+
+export type StatusEffect = {
+    name: string,
+    duration: number,
 }
 
 function lowSpeedProb(factor: SpeedFactor): number {
@@ -72,7 +77,7 @@ export class RaceState {
         }
     }
 
-    nextState(): RaceState {
+    nextState(race: Race): RaceState {
         let next = new RaceState()        
         next.time = this.time + SERVER_TICK_RATE_MS
         next.horseStates = this.horseStates.map((hs, i) => {
@@ -83,12 +88,18 @@ export class RaceState {
             const currentPlacement = this.placement(i)
             const positionPercent = hs.position/RACE_LENGTH
 
-            const targetSpeed =
+            let targetSpeed =
                 (hs.speedMode === 'high')
                 ? hs.horse.highSpeed
                 : (hs.speedMode === 'mid')
                   ? hs.horse.midSpeed
                   : hs.horse.lowSpeed
+
+            // If the horse tripped, set target speed to 0.
+            const trip = hs.hasStatus('trip')
+            if (trip) {
+                targetSpeed = 0
+            }
 
             // Move position by currentSpeed
             nextHs.position = hs.position + hs.currentSpeed*dt
@@ -109,20 +120,27 @@ export class RaceState {
             // Accelerate if we are behind the target speed
             const accelMultiplier = (hs.speedMode === 'high') ? 2 : 1
             nextHs.currentSpeed = 
-                Math.min(hs.currentSpeed + accelMultiplier * hs.horse.acceleration * dt,
+                Math.min(hs.currentSpeed +
+                         accelMultiplier * hs.horse.acceleration * dt,
                          targetSpeed)
 
-            // If in low mode, increase stamina by 12.5% max per second
-            // If in mid mode, decrease stamina proportional to top speed
-            // If in high mode, decrease stamina proportional to top speed but faster
-            const staminaChange =
-                dt * ((hs.speedMode === 'low')
-                ? hs.horse.stamina/8
-                : (hs.speedMode === 'mid')
-                  ? -(hs.currentSpeed/100)
-                  : -(hs.currentSpeed/50))
+            // If speed is below the stamina threshold, replenish stamina,
+            // otherwise drain it.
+            // If going slow, you will always recover 12.5% stamina per second.
+            // If going fast, stamina consumption increases.
+            let staminaChange = STAMINA_THRESHOLD - hs.currentSpeed
 
-            nextHs.currentStamina = Math.max(0, hs.currentStamina + staminaChange)
+            if (hs.speedMode === 'low') {
+                staminaChange = Math.max(staminaChange, hs.horse.stamina/8)
+            } else if (hs.speedMode === 'high') {
+                staminaChange += 200
+            }
+
+            staminaChange *= dt
+
+            nextHs.currentStamina = 
+                Math.min(hs.horse.stamina,
+                         Math.max(0, hs.currentStamina + staminaChange))
 
             // If the horse is currently deciding to go at 'low' or 'high'
             // speed for a time, decrease the buff duration
@@ -148,6 +166,28 @@ export class RaceState {
             // If there is no active buff, horse is moving at 'mid' speed-
             // otherwise, at the speed defined by the mode buff
             nextHs.speedMode = (nextHs.modeBuff === null) ? 'mid' : nextHs.modeBuff.mode
+
+            // Tick down status effects.
+            for (const status of hs.statusEffects) {
+                if (status.duration >= 0) {
+                    nextHs.statusEffects.push({
+                        name: status.name,
+                        duration: status.duration - SERVER_TICK_RATE_MS,
+                    })
+                }
+            }
+
+            // If the horse hasn't tripped, every tick add a mild probability
+            // the horse trips.
+            const tripFactor = (hs.currentSpeed - TRIP_LOW_SPEED)/
+                (TRIP_HIGH_SPEED - TRIP_LOW_SPEED)
+            console.log(tripFactor * race.tripProbability)
+            if (!trip && Math.random() < tripFactor * race.tripProbability) {
+                nextHs.statusEffects.push({
+                    name: 'trip',
+                    duration: TRIP_DURATION_MS,
+                })
+            }
 
             return nextHs
         })
@@ -206,6 +246,11 @@ export class HorseState {
         duration: number,
     } | null = null
 
+    statusEffects: StatusEffect[] = []
+
+    hasStatus(status: string): boolean {
+        return this.statusEffects.find((se) => se.name === status) !== undefined
+    }
 
     constructor(horse: InternalHorse) {
         this.horse = horse
