@@ -68,44 +68,22 @@ A horse race betting application that offers users the thrill of wagering on hor
 ## Team Responsibilities
 - Will F: Backend, GitHub Manager
 - Fergus: Frontend
-- Adonis: Frontend, Frontend - Backend Integration
-- Lando: Project Manager / Scrum Master, Documenter, Backend
+- Adonis: Frontend, Full Stack Developer and Integration
+- Lando: Backend, Project Manager / Scrum Master, Documenter
 
 ## Project Management
 
-## Timeline
-- Monday (29th): Establish a socket connnections between the frontend and backend.  Incorporate authorization.  Creating the schemas.
-- Tuesday (30th): Creating the race page.  Incorporating the horse game logic and simulations.  Creating all of the routes / endpoints.  
-- Wednesday (1st): Creating the user account and sign in. Applying CRUD operations.  Designing the navigation bar.
-- Thursday (2nd): Deploy the frontend and backend.  Design the win/lose logic.
-- Friday (3rd): Creating the UI from the wireframes
-- Saturday (4th): CSS styling.  Applying ice box if applicable.
-- Sunday (5th): Debugging, testing and polishing the project.
-- Monday (6th): Presentation
 
 ## TIMELINE TABLE
 ### Backend
-| Day       | Task        | A | F | L | W |
+| Day       | MVP Item        | A | F | L | W |
 |---------  |------       |---|---|---|---|
-|Saturday   |             |   |   |   |   |
-|Sunday     |             |   |   |   |   |
-|Monday     |             |   |   |   |   |
-|Tuesday    |             |   |   |   |   |
-|Wednesday  |             |   |   |   |   |
-|Thursday   |             |   |   |   |   |
-|Friday     |             |   |   |   |   |
-|Saturday   |             |   |   |   |   |
-|Sunday     |             |   |   |   |   |
-
-### Frontend
-| Day       | Task        | A | F | L | W |
-|---------  |------       |---|---|---|---|
-|Saturday   |             |   |   |   |   |
-|Sunday     |             |   |   |   |   |
-|Monday     |             |   |   |   |   |
-|Tuesday    |             |   |   |   |   |
-|Wednesday  |             |   |   |   |   |
-|Thursday   |             |   |   |   |   |
-|Friday     |             |   |   |   |   |
-|Saturday   |             |   |   |   |   |
-|Sunday     |             |   |   |   |   |
+|Saturday   | #2 - #6 User Account           |   |   |   |   |
+|Sunday     | #14, #13, Curr Balance & Timer          |   |   |   |   |
+|Monday     |  #10, #11, #12 Race & results           |   |   |   |   |
+|Tuesday    | #8, #9 Horse list and place bet           |   |   |   |   |
+|Wednesday  | *DEPLOY* Debug          |   |   |   |   |
+|Thursday   | Styling           |   |   |   |   |
+|Friday     | Icebox items            |   |   |   |   |
+|Saturday   | Wild card day             |   |   |   |   |
+|Sunday     | Debugging and Testing            |   |   |   |   |
