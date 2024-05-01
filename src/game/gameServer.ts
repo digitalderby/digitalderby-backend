@@ -230,6 +230,13 @@ export class GameServer {
             return
         }
 
+        for (const client of this.clients.values()) {
+            if (client.username === payload.username) {
+                next(new Error(`User already logged in`))
+                return
+            }
+        }
+
         let user: UserSpec | null
         try {
             user = await User.findOne({ username: payload.username })
