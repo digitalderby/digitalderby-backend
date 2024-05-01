@@ -12,11 +12,96 @@ import { jwtSecret } from '../auth/secrets.js'
 import { server } from '../app.js'
 import GameLog from '../models/GameLog.js'
 import { User, UserSpec } from '../models/User.js'
-import { BETTING_DELAY, CHEAT_MODE, HORSES_PER_RACE, PRERACE_DELAY, RACE_LENGTH, RESULTS_DELAY, SERVER_TICK_RATE_MS } from '../config/globalsettings.js'
+import { BETTING_DELAY, CHEAT_MODE, HORSES_PER_RACE, MINIMUM_BET, PRERACE_DELAY, RACE_LENGTH, RESULTS_DELAY, SERVER_TICK_RATE_MS } from '../config/globalsettings.js'
+import { Types } from 'mongoose'
 
 console.log(`Betting delay: ${BETTING_DELAY}`)
 console.log(`Pre-race delay: ${PRERACE_DELAY}`)
 console.log(`Results delay: ${RESULTS_DELAY}`)
+
+export interface raceDetailsSchema {
+    horses: {
+        // Name of the horse.
+        horseName: string,
+        // ID of the horse.
+        horseId: string,
+        // Color of the horse.
+        horseColor: string,
+        // Icons of the horse.
+        horseIcons: string[],
+    }[]
+    // Length of the race in units.
+    raceLength: number,
+}
+
+export interface generalStateSchema {
+    // Number of connected clients.
+    numClients: number,
+    lag: number,
+
+    // Currently queued race- information on each specific horse.
+    race: raceDetailsSchema,
+    // Current value of the betting pool.
+    currentPoolValue: number,
+    // Minimum bet value
+    minimumBet: number,
+}
+
+export interface betStateSchema extends generalStateSchema {
+    status: 'betting',
+    // Timestamp representing when the next race will start.
+    raceStartTime: Date,
+}
+
+export interface raceStateSchema extends generalStateSchema {
+    status: 'race',
+    // Timestamp representing when the horse simulation will begin. Will
+    // be null if the race has already started.
+    preraceStartTime?: Date,
+
+    // Array of event messages sent from the server when an event happens
+    // during the race.
+    eventMessages: string[]
+
+    // Current state of the race.
+    raceState: {
+        // Instantaneous state of a given horse. Uses the same indices as a race,
+        // so raceState.horseStates[0] refers to the same horse as race.horses[0].
+        horseStates: {
+            // Current position of the horse.
+            position: number,
+            // Current speed of the horse.
+            speed: number,
+            // Whether or not the horse has finished the race.
+            isFinished: boolean,
+            // Time that the horse has finished the race.
+            finishTime?: number,
+        }[]
+        // An array where the 0th index is the index of the horse in 1st place,
+        // the 1st index is the index of the horse in 2nd place, etc.
+        rankings: number[]
+    }
+}
+
+export interface resultsSchema extends generalStateSchema {
+    status: 'results',
+    nextRaceStartTime: Date,
+
+    // Rankings of each horse: rankings[0] is the index of the horse in 1st,
+    // rankings[1] is the index of the horse in 2nd, etc.
+    rankings: number[],
+    finishTimes: (number | null)[]
+}
+
+export interface clientStatusSchema {
+    username: string,
+    id: Types.ObjectId,
+    wallet: number,
+    bet: {
+        betValue: number,
+        horseIdx: number,
+    } | null,
+}
 
 const ServerInactiveError = {
     message: 'Server is inactive'
@@ -51,10 +136,13 @@ export class GameServer {
 
     /** Timer that ticks down to zero in betting mode before a race begins. */
     bettingTimer: number = 0
+    bettingEndTimestamp: Date = new Date()
     /** Timer that ticks down to zero in race mode before a race begins. */
     preRaceTimer: number = 0
+    preraceEndTimestamp: Date = new Date()
     /** Timer that ticks down to zero in results mode before a new round begins. */
     resultsTimer: number = 0
+    resultsEndTimestamp: Date = new Date()
 
     _loopCancelFunction: (() => void) | null = null
 
@@ -105,7 +193,7 @@ export class GameServer {
         console.log('Server is now closed')
     }
 
-    async closedMiddleware(socket: Socket, next: (err?: Error | undefined) => void) {
+    async closedMiddleware(_socket: Socket, next: (err?: Error | undefined) => void) {
         console.log('Handling inbound socket.')
         if (this.serverStatus === 'closed') {
             console.log('Rejected: server is closed')
@@ -144,6 +232,13 @@ export class GameServer {
             return
         }
 
+        for (const clientName of this.clients.keys()) {
+            if (clientName === payload.username) {
+                next(new Error(`User already logged in`))
+                return
+            }
+        }
+
         let user: UserSpec | null
         try {
             user = await User.findOne({ username: payload.username })
@@ -174,14 +269,17 @@ export class GameServer {
         const clientInfo = new ClientInfo(socket)
         // Initially clients are unauthenticated. Clients may authenticate
         // themselves by sending a 'login' message to the server.
-        this.clients.set(socket.id, clientInfo)
-
-        // Log all events as they come in.
-        socket.onAny((evt, ...args) => console.log(evt, args))
+        this.clients.set(socket.data.username, clientInfo)
+        
+        // Set up socket middleware to log all inbound socket requests.
+        socket.use(([event, ...args], next) => {
+            console.log(`${socket.data.username}: (${event}) (${args})`)
+            next()
+        })
 
         // Client closed the connection.
         socket.on('disconnect', () => {
-            this.clients.delete(socket.id)
+            this.clients.delete(socket.data.username)
         })
 
         // Client places a bet on a given horse
@@ -191,14 +289,6 @@ export class GameServer {
                 callback = (payload: any) => {
                     socket.emit('debuglog', payload)
                 }
-            }
-
-            let clientInfo = this.clients.get(socket.id)
-            if (clientInfo === undefined) {
-                callback({
-                    message: 'Not in client listing'
-                })
-                return
             }
 
             if (this.raceStatus !== 'betting') {
@@ -228,15 +318,33 @@ export class GameServer {
                 return
             }
 
+            if (!isFinite(betValue)) {
+                callback({
+                    message: 'Bet is an invalid numeric quantity'
+                })
+                return
+            }
+
+            if (betValue < MINIMUM_BET) {
+                callback({
+                    message: `Bet must be at least ${MINIMUM_BET}`
+                })
+                return
+            }
+
             this.bets.set(clientInfo.username, new BetInfo({
                 username: clientInfo.username,
                 id: clientInfo.id,
-                betValue: betValue,
+                betValue: Math.floor(betValue),
                 horseIdx: horseIdx,
                 horseId: this.race.horses[horseIdx].spec._id,
             }))
 
             this.pool[horseIdx] += betValue
+            this.totalPool = this.pool.reduce((a,b) => a+b, 0)*2
+
+            this.emitClientStatus(clientInfo)
+            this.broadcastStateV2()
 
             callback({
                 message: 'ok',
@@ -254,14 +362,6 @@ export class GameServer {
                 }
             }
 
-            let clientInfo = this.clients.get(socket.id)
-            if (clientInfo === undefined) {
-                res({
-                    message: 'Not in client listing'
-                })
-                return
-            }
-
             if (this.raceStatus !== 'betting') {
                 res({
                     message: 'Not in betting mode'
@@ -272,7 +372,11 @@ export class GameServer {
             if (currentBet !== undefined) {
                 this.bets.delete(clientInfo.username)
                 this.pool[currentBet.horseIdx] -= currentBet.betValue
+                this.totalPool = this.pool.reduce((a,b) => a+b, 0)*2
             } 
+
+            this.emitClientStatus(clientInfo)
+            this.broadcastStateV2()
 
             res({
                 message: 'ok',
@@ -281,15 +385,27 @@ export class GameServer {
 
         console.log('Successfully set up event listeners')
         socket.emit('username', socket.data.username)
+
         this.emitClientStatus(clientInfo)
+        this.broadcastStateV2()
     }
 
     emitClientStatus(client: ClientInfo) {
-        const payload = {
+        let payload: clientStatusSchema = {
             username: client.username,
             id: client.id,
             wallet: client.wallet,
+            bet: null
+        } 
+
+        const bet = this.bets.get(client.username)
+        if (bet !== undefined) {
+            payload.bet = {
+                betValue: bet.betValue,
+                horseIdx: bet.horseIdx,
+            }
         }
+
         client.socket.emit('clientStatus', payload)
     }
 
@@ -298,6 +414,7 @@ export class GameServer {
         this.raceStatus = 'betting'
         this.race = createRace()
         this.bettingTimer = BETTING_DELAY * 1000
+        this.bettingEndTimestamp = new Date(Date.now() + BETTING_DELAY * 1000)
         this.raceStates = null
 
         this.bets = new Map()
@@ -307,17 +424,16 @@ export class GameServer {
         for (const client of this.clients.values()) {
             this.emitClientStatus(client)
         }
+
+        this.broadcastStateV2()
     }
 
     startRaceMode() {
         console.log('Entering race mode')
         this.raceStatus = 'race'
         this.preRaceTimer = PRERACE_DELAY * 1000
+        this.preraceEndTimestamp = new Date(Date.now() + PRERACE_DELAY * 1000)
         if (this.race === null) { throw new Error('no race') }
-
-        for (let i = 0; i < HORSES_PER_RACE; i++) {
-            this.totalPool += this.pool[i] * 2
-        }
 
         console.log(`Current pool: ${this.pool}`)
         console.log(`Total: ${this.totalPool}`)
@@ -328,12 +444,15 @@ export class GameServer {
         if (CHEAT_MODE) {
             this.raceStates[0].horseStates[0].position = RACE_LENGTH-1
         }
+
+        this.broadcastStateV2()
     }
 
     startResultsMode() {
         console.log('Entering results mode')
         this.raceStatus = 'results'
         this.resultsTimer = RESULTS_DELAY * 1000
+        this.resultsEndTimestamp = new Date(Date.now() + RESULTS_DELAY * 1000)
 
         if (this.raceStates === null) { throw new Error('Could not enter results mode') }
 
@@ -344,13 +463,13 @@ export class GameServer {
             if (bet.horseIdx === lastState.rankings[0]) {
                 bet.returns = this.totalPool * Math.floor(bet.betValue / this.pool[bet.horseIdx])
             }
-            console.log(`Player ${bet.username} ${(bet.returns > 0) ? 'receives' : 'loses'} ${Math.abs(bet.returns)} from their bet on horse ${bet.horseIdx+1}`)
+            console.log(`Player ${bet.username} ${(bet.returns > 0) ? 'receives' : 'loses'} ${Math.abs(bet.returns - bet.betValue)} from their bet on horse ${bet.horseIdx+1}`)
         }
 
         // do persistence stuff
         this.commitGame()
 
-        this.notifyClientsOfBetResults()
+        this.broadcastStateV2()
     }
 
     handleTick(): void {
@@ -394,7 +513,83 @@ export class GameServer {
         }
     }
 
-    emitState(lag: bigint): void {
+    broadcastStateV2(lag?: bigint): void {
+        if (this.io === null) { return }
+
+        if (this.race === null) { return }
+
+        let currLag = lag
+        if (currLag === undefined) {
+            const now = hrTimeMs()
+            currLag = this.lag + (now - this.prevTime)
+        }
+
+        let payload: resultsSchema | raceStateSchema | betStateSchema 
+        const general: generalStateSchema = {
+
+            numClients: this.clients.size,
+            lag: Number(currLag),
+            race: {
+                horses: this.race.horses.map((h) => ({
+                    horseName: h.spec.name,
+                    horseId: h.spec._id.toString(),
+                    horseColor: h.spec.color,
+                    horseIcons: h.spec.icons,
+                })),
+                raceLength: this.race.length,
+            },
+            currentPoolValue: this.totalPool,
+            minimumBet: MINIMUM_BET,
+        }
+
+        switch(this.raceStatus) {
+            case 'betting': {
+                payload = {
+                    ...general,
+                    status: 'betting',
+                    raceStartTime: this.bettingEndTimestamp,
+                }
+                break;
+            }
+            case 'race': {
+                if (this.raceStates === null) { return }
+                const lastState = this.raceStates[this.raceStates.length-1]
+                payload = {
+                    ...general,
+                    status: 'race',
+                    preraceStartTime: (this.preRaceTimer > 0)
+                    ? undefined : this.preraceEndTimestamp,
+                    eventMessages: this.messages,
+                    raceState: {
+                        horseStates: lastState.horseStates.map((hs) => ({
+                            position: hs.position,
+                            speed: hs.currentSpeed,
+                            isFinished: hs.finishTime !== null,
+                            finishTime: (hs.finishTime !== null) ? hs.finishTime : undefined,
+                        })),
+                        rankings: lastState.rankings,
+                    },
+                }
+                break;
+            }
+            case 'results': {
+                if (this.raceStates === null) { return }
+                const lastState = this.raceStates[this.raceStates.length-1]
+                payload = {
+                    ...general,
+                    status: 'results',
+                    nextRaceStartTime: this.resultsEndTimestamp,
+                    rankings: lastState.rankings,
+                    finishTimes: lastState.horseStates.map((hs) => hs.finishTime),
+                }
+                break;
+            }
+        }
+
+        this.io.of('/user').emit('gamestatev2', payload)
+    }
+
+    emitStateV1(lag: bigint): void {
         if (this.io === null) { throw ServerInactiveError }
 
         switch(this.raceStatus) {
@@ -445,7 +640,6 @@ export class GameServer {
             const bet = this.bets.get(client.username)
             if (bet === undefined) { continue }
             client.socket.emit('betResults', bet)
-            this.emitClientStatus(client)
         }
     }
 
@@ -466,10 +660,18 @@ export class GameServer {
         // And then for each of the bets, commit the bet using the game
         // log's id
         await Promise.all(
-            [...this.bets.values()].map(async (bet) => {
+            [...this.bets.entries()].map(async ([user, bet]) => {
+                // Update local wallet for each connected client
+                const client = this.clients.get(user)
+                if (client) {
+                    client.wallet += bet.returns - bet.betValue
+                    this.emitClientStatus(client)
+                }
                 await bet.commit(game._id) 
             })
         )
+
+        this.notifyClientsOfBetResults()
     }
 
     // Start the main server loop.
@@ -500,7 +702,12 @@ export class GameServer {
             }
 
             if (dirty) {
-                this.emitState(this.lag)
+                this.emitStateV1(this.lag)
+            }
+
+            // Only broadcast v2 states if we are in race mode
+            if (dirty && this.raceStatus === 'race') {
+                this.broadcastStateV2(this.lag)
             }
         }
 
