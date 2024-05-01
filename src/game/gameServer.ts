@@ -13,6 +13,7 @@ import { server } from '../app.js'
 import GameLog from '../models/GameLog.js'
 import { User, UserSpec } from '../models/User.js'
 import { BETTING_DELAY, CHEAT_MODE, HORSES_PER_RACE, MINIMUM_BET, PRERACE_DELAY, RACE_LENGTH, RESULTS_DELAY, SERVER_TICK_RATE_MS } from '../config/globalsettings.js'
+import { Types } from 'mongoose'
 
 console.log(`Betting delay: ${BETTING_DELAY}`)
 console.log(`Pre-race delay: ${PRERACE_DELAY}`)
@@ -88,6 +89,16 @@ export interface resultsSchema extends generalStateSchema {
     // rankings[1] is the index of the horse in 2nd, etc.
     rankings: number[],
     finishTimes: (number | null)[]
+}
+
+export interface clientStatusSchema {
+    username: string,
+    id: Types.ObjectId,
+    wallet: number,
+    bet: {
+        betValue: number,
+        horseIdx: number,
+    } | null,
 }
 
 const ServerInactiveError = {
@@ -251,8 +262,11 @@ export class GameServer {
         // themselves by sending a 'login' message to the server.
         this.clients.set(socket.id, clientInfo)
         
-        // Set up socket middleware to block all socket requests
-        // that aren't in the clientinfo
+        // Set up socket middleware to log all inbound socket requests.
+        socket.use(([event, ...args], next) => {
+            console.log(`${socket.data.username}: (${event}) (${args})`)
+            next()
+        })
 
         // Client closed the connection.
         socket.on('disconnect', () => {
@@ -311,6 +325,10 @@ export class GameServer {
             }))
 
             this.pool[horseIdx] += betValue
+            this.totalPool = this.pool.reduce((a,b) => a+b, 0)*2
+
+            this.emitClientStatus(clientInfo)
+            this.broadcastStateV2()
 
             callback({
                 message: 'ok',
@@ -338,7 +356,11 @@ export class GameServer {
             if (currentBet !== undefined) {
                 this.bets.delete(clientInfo.username)
                 this.pool[currentBet.horseIdx] -= currentBet.betValue
+                this.totalPool = this.pool.reduce((a,b) => a+b, 0)*2
             } 
+
+            this.emitClientStatus(clientInfo)
+            this.broadcastStateV2()
 
             res({
                 message: 'ok',
@@ -347,15 +369,27 @@ export class GameServer {
 
         console.log('Successfully set up event listeners')
         socket.emit('username', socket.data.username)
+
         this.emitClientStatus(clientInfo)
+        this.broadcastStateV2()
     }
 
     emitClientStatus(client: ClientInfo) {
-        const payload = {
+        let payload: clientStatusSchema = {
             username: client.username,
             id: client.id,
             wallet: client.wallet,
+            bet: null
+        } 
+
+        const bet = this.bets.get(client.username)
+        if (bet !== undefined) {
+            payload.bet = {
+                betValue: bet.betValue,
+                horseIdx: bet.horseIdx,
+            }
         }
+
         client.socket.emit('clientStatus', payload)
     }
 
@@ -373,6 +407,8 @@ export class GameServer {
         for (const client of this.clients.values()) {
             this.emitClientStatus(client)
         }
+
+        this.broadcastStateV2()
     }
 
     startRaceMode() {
@@ -380,10 +416,6 @@ export class GameServer {
         this.raceStatus = 'race'
         this.preRaceTimer = PRERACE_DELAY * 1000
         if (this.race === null) { throw new Error('no race') }
-
-        for (let i = 0; i < HORSES_PER_RACE; i++) {
-            this.totalPool += this.pool[i] * 2
-        }
 
         console.log(`Current pool: ${this.pool}`)
         console.log(`Total: ${this.totalPool}`)
@@ -417,6 +449,8 @@ export class GameServer {
         this.commitGame()
 
         this.notifyClientsOfBetResults()
+
+        this.broadcastStateV2()
     }
 
     handleTick(): void {
@@ -460,16 +494,22 @@ export class GameServer {
         }
     }
 
-    emitStateV2(lag: bigint): void {
+    broadcastStateV2(lag?: bigint): void {
         if (this.io === null) { return }
 
         if (this.race === null) { return }
+
+        let currLag = lag
+        if (currLag === undefined) {
+            const now = hrTimeMs()
+            currLag = this.lag + (now - this.prevTime)
+        }
 
         let payload: resultsSchema | raceStateSchema | betStateSchema 
         const general: generalStateSchema = {
 
             numClients: this.clients.size,
-            lag: Number(lag),
+            lag: Number(currLag),
             race: {
                 horses: this.race.horses.map((h) => ({
                     horseName: h.spec.name,
@@ -526,7 +566,7 @@ export class GameServer {
             }
         }
 
-        this.io.of('/user').emit('gamestate', payload)
+        this.io.of('/user').emit('gamestatev2', payload)
     }
 
     emitStateV1(lag: bigint): void {
@@ -636,6 +676,11 @@ export class GameServer {
 
             if (dirty) {
                 this.emitStateV1(this.lag)
+            }
+
+            // Only broadcast v2 states if we are in race mode
+            if (dirty && this.raceStatus === 'race') {
+                this.broadcastStateV2(this.lag)
             }
         }
 
