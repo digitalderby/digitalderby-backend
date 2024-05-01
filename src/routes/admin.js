@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var express_1 = require("express");
+var authentication_js_1 = require("../auth/authentication.js");
+var admin_js_1 = require("../controllers/admin.js");
+var router = express_1.default.Router();
+router.post('/login', admin_js_1.loginAsAdmin);
+router.get('/settings', authentication_js_1.loggedInAsAdmin, admin_js_1.getServerSettings);
+router.get('/serverStatus', admin_js_1.getServerStatus);
+router.post('/autostart', authentication_js_1.loggedInAsAdmin, admin_js_1.toggleAutostart);
+router.post('/startRaceServer', authentication_js_1.loggedInAsAdmin, admin_js_1.openRaceServer);
+router.post('/stopRaceServer', authentication_js_1.loggedInAsAdmin, admin_js_1.closeRaceServer);
+router.post('/startRaceLoop', authentication_js_1.loggedInAsAdmin, admin_js_1.startRaceLoop);
+router.post('/startRaceAndAutostart', authentication_js_1.loggedInAsAdmin, admin_js_1.startRaceAndAutostart);
+router.post('/newHorses', authentication_js_1.loggedInAsAdmin, admin_js_1.createNewHorses);
+exports.default = router;
