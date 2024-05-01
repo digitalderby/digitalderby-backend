@@ -303,6 +303,10 @@ export class GameServer {
         this.bets = new Map()
         this.pool = Array(HORSES_PER_RACE).fill(0)
         this.totalPool = 0
+
+        for (const client of this.clients.values()) {
+            this.emitClientStatus(client)
+        }
     }
 
     startRaceMode() {
@@ -441,6 +445,7 @@ export class GameServer {
             const bet = this.bets.get(client.username)
             if (bet === undefined) { continue }
             client.socket.emit('betResults', bet)
+            this.emitClientStatus(client)
         }
     }
 
