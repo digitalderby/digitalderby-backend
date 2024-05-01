@@ -21,27 +21,25 @@ const rainImpactConfig: RainEffectConfig = {
 };
 
 /**
-* Applies rain effects to a randomly selected horse from an array.
+* Applies rain effects to all horses in the array.
 * 
 * @param horses - Array of horse objects.
 * @param isRaining - Boolean indicating if it is currently raining.
 */
-function applyRainEffectToRandomHorse(horses: Horse[], isRaining: boolean): void {
+function applyRainEffectToAllHorses(horses: Horse[], isRaining: boolean): void {
   if (isRaining && horses.length > 0) {
-      // Randomly select one horse to affect
-      const randomIndex = Math.floor(Math.random() * horses.length);
-      const selectedHorse = horses[randomIndex];
+    horses.forEach(horse => {
+      // Apply rain effects to each horse
+      horse.topSpeed = Math.floor(horse.topSpeed * rainImpactConfig.speedImpactFactor);
+      horse.stamina = Math.floor(horse.stamina * rainImpactConfig.staminaImpactFactor);
+      horse.acceleration = Math.floor(horse.acceleration * rainImpactConfig.accelerationImpactFactor);
 
-      // Apply rain effects to the selected horse
-      selectedHorse.topSpeed = Math.floor(selectedHorse.topSpeed * rainImpactConfig.speedImpactFactor);
-      selectedHorse.stamina = Math.floor(selectedHorse.stamina * rainImpactConfig.staminaImpactFactor);
-      selectedHorse.acceleration = Math.floor(selectedHorse.acceleration * rainImpactConfig.accelerationImpactFactor);
-
-      console.log(`Rain effects applied to Horse ID ${selectedHorse.id}: 
-      New Top Speed: ${selectedHorse.topSpeed}, 
-      New Stamina: ${selectedHorse.stamina}, 
-      New Acceleration: ${selectedHorse.acceleration}`);
+      console.log(`Rain effects applied to Horse ID ${horse.id}: 
+      New Top Speed: ${horse.topSpeed}, 
+      New Stamina: ${horse.stamina}, 
+      New Acceleration: ${horse.acceleration}`);
+    });
   }
 }
 
-export { applyRainEffectToRandomHorse };
+export { applyRainEffectToAllHorses };
