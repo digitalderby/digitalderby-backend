@@ -43,6 +43,8 @@ export interface generalStateSchema {
     race: raceDetailsSchema,
     // Current value of the betting pool.
     currentPoolValue: number,
+    // Minimum bet value
+    minimumBet: number,
 }
 
 export interface betStateSchema extends generalStateSchema {
@@ -530,6 +532,7 @@ export class GameServer {
                 raceLength: this.race.length,
             },
             currentPoolValue: this.totalPool,
+            minimumBet: MINIMUM_BET,
         }
 
         switch(this.raceStatus) {
