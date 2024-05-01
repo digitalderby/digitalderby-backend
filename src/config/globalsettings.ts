@@ -11,3 +11,4 @@ export const RESULTS_DELAY = Number(process.env.RESULTS_DELAY) || 10
 
 export const CHEAT_MODE = process.env.CHEAT_MODE === 'enabled'
 export const RACE_LENGTH = Number(process.env.RACE_LENGTH) || 10000
+export const AUTOSTART = process.env.AUTOSTART === 'enabled'
