@@ -191,7 +191,7 @@ export class GameServer {
         console.log('Server is now closed')
     }
 
-    async closedMiddleware(socket: Socket, next: (err?: Error | undefined) => void) {
+    async closedMiddleware(_socket: Socket, next: (err?: Error | undefined) => void) {
         console.log('Handling inbound socket.')
         if (this.serverStatus === 'closed') {
             console.log('Rejected: server is closed')
