@@ -1,10 +1,10 @@
 import { HorseSpec, } from "../../models/Horse.js";
 
-export const LOW_SPEED_BOUNDS = [60, 70]
-export const MID_SPEED_BOUNDS = [160, 170]
-export const HIGH_SPEED_BOUNDS = [200, 220]
-export const ACCELERATION_BOUNDS = [1,9]
-export const STAMINA_BOUNDS = [500, 550]
+export const LOW_SPEED_BOUNDS = [400, 450]
+export const MID_SPEED_BOUNDS = [600, 650]
+export const HIGH_SPEED_BOUNDS = [800, 900]
+export const ACCELERATION_BOUNDS = [400,440]
+export const STAMINA_BOUNDS = [200, 220]
 
 export const DECELERATION = 12
 export const MODE_DURATION = 4000
