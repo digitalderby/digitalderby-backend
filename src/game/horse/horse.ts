@@ -4,7 +4,7 @@ export const LOW_SPEED_BOUNDS = [400, 450]
 export const MID_SPEED_BOUNDS = [600, 650]
 export const HIGH_SPEED_BOUNDS = [800, 900]
 export const ACCELERATION_BOUNDS = [400,440]
-export const STAMINA_BOUNDS = [200, 220]
+export const STAMINA_BOUNDS = [180, 220]
 
 export const DECELERATION = 12
 export const MODE_DURATION = 4000

@@ -41,15 +41,17 @@ function highSpeedProb(factor: SpeedFactor): number {
 function rollForModeBuff(factor: SpeedFactor): {
     mode: 'low' | 'high', duration: number
 } | null {
-    if (Math.random() < lowSpeedProb(factor)) {
+    const lowProb = lowSpeedProb(factor)
+    const highProb = highSpeedProb(factor)
+    if (Math.random() < lowProb) {
         return {
             mode: 'low',
             duration: MODE_DURATION,
         }
-    } else if (Math.random() < highSpeedProb(factor)) {
+    } else if (Math.random() < highProb) {
         return {
             mode: 'high',
-            duration: MODE_DURATION,
+            duration: MODE_DURATION * (0.5 + Math.random()*1.5)
         }
     }
     return null
