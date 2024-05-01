@@ -318,6 +318,13 @@ export class GameServer {
                 return
             }
 
+            if (!isFinite(betValue)) {
+                callback({
+                    message: 'Bet is an invalid numeric quantity'
+                })
+                return
+            }
+
             if (betValue < MINIMUM_BET) {
                 callback({
                     message: `Bet must be at least ${MINIMUM_BET}`
@@ -328,7 +335,7 @@ export class GameServer {
             this.bets.set(clientInfo.username, new BetInfo({
                 username: clientInfo.username,
                 id: clientInfo.id,
-                betValue: betValue,
+                betValue: Math.floor(betValue),
                 horseIdx: horseIdx,
                 horseId: this.race.horses[horseIdx].spec._id,
             }))
