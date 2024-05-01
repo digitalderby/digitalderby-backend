@@ -181,7 +181,6 @@ export class RaceState {
             // the horse trips.
             const tripFactor = (hs.currentSpeed - TRIP_LOW_SPEED)/
                 (TRIP_HIGH_SPEED - TRIP_LOW_SPEED)
-            console.log(tripFactor * race.tripProbability)
             if (!trip && Math.random() < tripFactor * race.tripProbability) {
                 nextHs.statusEffects.push({
                     name: 'trip',
