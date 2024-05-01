@@ -19,6 +19,7 @@ import bodyParser from 'body-parser'
 
 import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
+import { AUTOSTART } from './config/globalsettings.js'
 
 export const args = {
     readOnly: false,
@@ -63,6 +64,10 @@ app.use(
 )
 
 gameServer.createServer(server)
+
+if (AUTOSTART) {
+    gameServer.startMainLoop()
+}
 
 server.listen(PORT, () => {
     console.log(`listening at http://localhost:${PORT}`)

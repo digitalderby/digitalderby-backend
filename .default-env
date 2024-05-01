@@ -1,3 +1,4 @@
+# Copy this into a `.env` file in the root directory
 # Port to listen in on
 PORT=3000
 # Authentication secret for JWTs
@@ -31,3 +32,7 @@ RACE_LENGTH=500
 DEFAULT_WALLET=100
 # Sets minimum value of bet
 MINIMUM_BET=10
+# Set to 'enabled' to automatically start the game loop on server start. Unset
+# to disable this behavior- manually start the server by sending a POST request
+# to `/admin/startRaceLoop` with an admin token.
+AUTOSTART=enabled
