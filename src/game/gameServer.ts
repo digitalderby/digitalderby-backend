@@ -230,8 +230,8 @@ export class GameServer {
             return
         }
 
-        for (const client of this.clients.values()) {
-            if (client.username === payload.username) {
+        for (const clientName of this.clients.keys()) {
+            if (clientName === payload.username) {
                 next(new Error(`User already logged in`))
                 return
             }
@@ -267,7 +267,7 @@ export class GameServer {
         const clientInfo = new ClientInfo(socket)
         // Initially clients are unauthenticated. Clients may authenticate
         // themselves by sending a 'login' message to the server.
-        this.clients.set(socket.id, clientInfo)
+        this.clients.set(socket.data.username, clientInfo)
         
         // Set up socket middleware to log all inbound socket requests.
         socket.use(([event, ...args], next) => {
@@ -277,7 +277,7 @@ export class GameServer {
 
         // Client closed the connection.
         socket.on('disconnect', () => {
-            this.clients.delete(socket.id)
+            this.clients.delete(socket.data.username)
         })
 
         // Client places a bet on a given horse
@@ -454,13 +454,11 @@ export class GameServer {
             if (bet.horseIdx === lastState.rankings[0]) {
                 bet.returns = this.totalPool * Math.floor(bet.betValue / this.pool[bet.horseIdx])
             }
-            console.log(`Player ${bet.username} ${(bet.returns > 0) ? 'receives' : 'loses'} ${Math.abs(bet.returns)} from their bet on horse ${bet.horseIdx+1}`)
+            console.log(`Player ${bet.username} ${(bet.returns > 0) ? 'receives' : 'loses'} ${Math.abs(bet.returns - bet.betValue)} from their bet on horse ${bet.horseIdx+1}`)
         }
 
         // do persistence stuff
         this.commitGame()
-
-        this.notifyClientsOfBetResults()
 
         this.broadcastStateV2()
     }
@@ -632,7 +630,6 @@ export class GameServer {
             const bet = this.bets.get(client.username)
             if (bet === undefined) { continue }
             client.socket.emit('betResults', bet)
-            this.emitClientStatus(client)
         }
     }
 
@@ -653,10 +650,18 @@ export class GameServer {
         // And then for each of the bets, commit the bet using the game
         // log's id
         await Promise.all(
-            [...this.bets.values()].map(async (bet) => {
+            [...this.bets.entries()].map(async ([user, bet]) => {
+                // Update local wallet for each connected client
+                const client = this.clients.get(user)
+                if (client) {
+                    client.wallet += bet.returns - bet.betValue
+                    this.emitClientStatus(client)
+                }
                 await bet.commit(game._id) 
             })
         )
+
+        this.notifyClientsOfBetResults()
     }
 
     // Start the main server loop.
