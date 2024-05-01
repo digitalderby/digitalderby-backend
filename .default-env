@@ -27,3 +27,7 @@ RESULTS_DELAY=10
 CHEAT_MODE=
 # Sets the length of the race
 RACE_LENGTH=500
+# Sets default user wallet upon creating a new account and respawning
+DEFAULT_WALLET=100
+# Sets minimum value of bet
+MINIMUM_BET=10

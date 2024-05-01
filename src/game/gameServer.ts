@@ -12,7 +12,7 @@ import { jwtSecret } from '../auth/secrets.js'
 import { server } from '../app.js'
 import GameLog from '../models/GameLog.js'
 import { User, UserSpec } from '../models/User.js'
-import { BETTING_DELAY, CHEAT_MODE, HORSES_PER_RACE, PRERACE_DELAY, RACE_LENGTH, RESULTS_DELAY, SERVER_TICK_RATE_MS } from '../config/globalsettings.js'
+import { BETTING_DELAY, CHEAT_MODE, HORSES_PER_RACE, MINIMUM_BET, PRERACE_DELAY, RACE_LENGTH, RESULTS_DELAY, SERVER_TICK_RATE_MS } from '../config/globalsettings.js'
 
 console.log(`Betting delay: ${BETTING_DELAY}`)
 console.log(`Pre-race delay: ${PRERACE_DELAY}`)
@@ -299,6 +299,13 @@ export class GameServer {
             if (betValue > clientInfo.wallet) {
                 callback({
                     message: 'Not enough balance to make bet'
+                })
+                return
+            }
+
+            if (betValue < MINIMUM_BET) {
+                callback({
+                    message: `Bet must be at least ${MINIMUM_BET}`
                 })
                 return
             }
