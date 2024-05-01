@@ -1,6 +1,6 @@
 {
   "name": "digitalderby-backend",
-  "type": "commonjs",
+  "type": "module",
   "version": "1.0.0",
   "description": "# Test Line",
   "main": "index.js",
