@@ -1,10 +1,8 @@
+import { HORSES_PER_RACE, HORSE_POPULATION } from "../../config/globalsettings.js";
 import { Horse, HorseSpec, generateNewHorses } from "../../models/Horse.js";
 import { randomIndicesNoReplacement } from "../../random/random.js";
 import { Race } from "../race.js";
 import { InternalHorse } from "./horse.js";
-
-export const HORSE_POPULATION = 100
-export const HORSES_PER_RACE = 4
 
 /** Collection of horses in memory for the game server to access and manipulate */
 export let localHorses: InternalHorse[] = []

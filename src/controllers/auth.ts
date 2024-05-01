@@ -1,10 +1,11 @@
 import jwt from 'jsonwebtoken'
 import { NextFunction, Request, Response } from "express";
-import { DEFAULT_WALLET, User } from "../models/User.js";
+import { User } from "../models/User.js";
 import { saltPassword, verifyPassword } from "../auth/password.js";
 import { jwtSecret } from '../auth/secrets.js';
 import { markDeletedUser } from '../auth/tokens.js';
 import { sendJSONError } from '../errorHandler.js';
+import { DEFAULT_WALLET } from '../config/globalsettings.js';
 
 export async function signup(req: Request, res: Response, next: NextFunction) {
     const foundUser = await User.findOne({ username: req.body.username })

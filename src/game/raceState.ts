@@ -1,11 +1,12 @@
+import { RACE_LENGTH, SERVER_TICK_RATE_MS } from "../config/globalsettings.js"
 import { InternalHorse } from "./horse/horse.js"
-import { RACE_DURATION, Race } from "./race.js"
-import { SERVER_TICK_RATE_MS } from "./gameServer.js"
+import { Race } from "./race.js"
 
 export class RaceState {
     horseStates: Array<HorseState> = []
     rankings: Array<number> = []
     time: number = 0
+    length: number = RACE_LENGTH
 
     constructor(race?: Race) {
         if (race) {
@@ -18,7 +19,7 @@ export class RaceState {
 
     nextState(): RaceState {
         let next = new RaceState()        
-        next.time = this.time + SERVER_TICK_RATE_MS 
+        next.time = this.time + SERVER_TICK_RATE_MS
         next.horseStates = this.horseStates.map((hs) => {
             if (hs.finishTime !== null) { return hs }
             let nextHs = new HorseState(hs.horse)
@@ -26,8 +27,8 @@ export class RaceState {
                 Math.min(hs.currentSpeed + hs.horse.acceleration,
                          hs.horse.topSpeed)
             nextHs.position = hs.position + hs.currentSpeed
-            if (nextHs.position > RACE_DURATION) {
-                nextHs.position = RACE_DURATION
+            if (nextHs.position >= RACE_LENGTH) {
+                nextHs.position = RACE_LENGTH
                 nextHs.finishTime = next.time
             }
 

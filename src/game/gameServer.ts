@@ -3,21 +3,16 @@ import corsSettings from './../cors.js'
 import { Socket, Server as SocketIOServer } from "socket.io"
 import { ClientInfo } from "../clientInfo.js"
 import { hrTimeMs } from "../time/time.js"
-import { RACE_DURATION, Race } from './race.js'
+import { Race } from './race.js'
 import { RaceState } from './raceState.js'
-import { HORSES_PER_RACE, createRace } from './horse/localHorses.js'
+import { createRace } from './horse/localHorses.js'
 import { BetInfo } from './betInfo.js'
 import jwt from 'jsonwebtoken'
 import { jwtSecret } from '../auth/secrets.js'
 import { server } from '../app.js'
 import GameLog from '../models/GameLog.js'
 import { User, UserSpec } from '../models/User.js'
-
-export const SERVER_TICK_RATE_MS = 100
-
-export const BETTING_DELAY = Number(process.env.BETTING_DELAY) || 10
-export const PRERACE_DELAY = Number(process.env.PRERACE_DELAY) || 3
-export const RESULTS_DELAY = Number(process.env.RESULTS_DELAY) || 10
+import { BETTING_DELAY, CHEAT_MODE, HORSES_PER_RACE, PRERACE_DELAY, RACE_LENGTH, RESULTS_DELAY, SERVER_TICK_RATE_MS } from '../config/globalsettings.js'
 
 console.log(`Betting delay: ${BETTING_DELAY}`)
 console.log(`Pre-race delay: ${PRERACE_DELAY}`)
@@ -308,6 +303,10 @@ export class GameServer {
         this.bets = new Map()
         this.pool = Array(HORSES_PER_RACE).fill(0)
         this.totalPool = 0
+
+        for (const client of this.clients.values()) {
+            this.emitClientStatus(client)
+        }
     }
 
     startRaceMode() {
@@ -324,7 +323,11 @@ export class GameServer {
         console.log(`Total: ${this.totalPool}`)
 
         this.raceStates = [new RaceState(this.race)]
-        this.raceStates[0].horseStates[0].position = RACE_DURATION-1
+
+        // If cheat mode is enabled, always put horses at the end
+        if (CHEAT_MODE) {
+            this.raceStates[0].horseStates[0].position = RACE_LENGTH-1
+        }
     }
 
     startResultsMode() {
@@ -354,7 +357,7 @@ export class GameServer {
         switch(this.raceStatus) {
         case 'betting':
             if (this.bettingTimer > 0) {
-                this.bettingTimer -= SERVER_TICK_RATE_MS
+                this.bettingTimer -= SERVER_TICK_RATE_MS 
                 return
             }
 
@@ -442,6 +445,7 @@ export class GameServer {
             const bet = this.bets.get(client.username)
             if (bet === undefined) { continue }
             client.socket.emit('betResults', bet)
+            this.emitClientStatus(client)
         }
     }
 
