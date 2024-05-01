@@ -137,7 +137,7 @@ export class GameServer {
     bettingEndTimestamp: Date = new Date()
     /** Timer that ticks down to zero in race mode before a race begins. */
     preRaceTimer: number = 0
-    preraceEndTimestamp: Date | null = null
+    preraceEndTimestamp: Date = new Date()
     /** Timer that ticks down to zero in results mode before a new round begins. */
     resultsTimer: number = 0
     resultsEndTimestamp: Date = new Date()
@@ -398,6 +398,7 @@ export class GameServer {
         this.raceStatus = 'betting'
         this.race = createRace()
         this.bettingTimer = BETTING_DELAY * 1000
+        this.bettingEndTimestamp = new Date(Date.now() + BETTING_DELAY * 1000)
         this.raceStates = null
 
         this.bets = new Map()
@@ -415,6 +416,7 @@ export class GameServer {
         console.log('Entering race mode')
         this.raceStatus = 'race'
         this.preRaceTimer = PRERACE_DELAY * 1000
+        this.preraceEndTimestamp = new Date(Date.now() + PRERACE_DELAY * 1000)
         if (this.race === null) { throw new Error('no race') }
 
         console.log(`Current pool: ${this.pool}`)
@@ -426,12 +428,15 @@ export class GameServer {
         if (CHEAT_MODE) {
             this.raceStates[0].horseStates[0].position = RACE_LENGTH-1
         }
+
+        this.broadcastStateV2()
     }
 
     startResultsMode() {
         console.log('Entering results mode')
         this.raceStatus = 'results'
         this.resultsTimer = RESULTS_DELAY * 1000
+        this.resultsEndTimestamp = new Date(Date.now() + RESULTS_DELAY * 1000)
 
         if (this.raceStates === null) { throw new Error('Could not enter results mode') }
 
@@ -537,7 +542,7 @@ export class GameServer {
                 payload = {
                     ...general,
                     status: 'race',
-                    preraceStartTime: (this.preraceEndTimestamp === null)
+                    preraceStartTime: (this.preRaceTimer > 0)
                     ? undefined : this.preraceEndTimestamp,
                     eventMessages: this.messages,
                     raceState: {
