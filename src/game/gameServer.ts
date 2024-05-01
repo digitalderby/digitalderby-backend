@@ -250,9 +250,9 @@ export class GameServer {
         // Initially clients are unauthenticated. Clients may authenticate
         // themselves by sending a 'login' message to the server.
         this.clients.set(socket.id, clientInfo)
-
-        // Log all events as they come in.
-        socket.onAny((evt, ...args) => console.log(evt, args))
+        
+        // Set up socket middleware to block all socket requests
+        // that aren't in the clientinfo
 
         // Client closed the connection.
         socket.on('disconnect', () => {
@@ -266,14 +266,6 @@ export class GameServer {
                 callback = (payload: any) => {
                     socket.emit('debuglog', payload)
                 }
-            }
-
-            let clientInfo = this.clients.get(socket.id)
-            if (clientInfo === undefined) {
-                callback({
-                    message: 'Not in client listing'
-                })
-                return
             }
 
             if (this.raceStatus !== 'betting') {
@@ -334,14 +326,6 @@ export class GameServer {
                 callback = (payload: any) => {
                     socket.emit('debuglog', payload)
                 }
-            }
-
-            let clientInfo = this.clients.get(socket.id)
-            if (clientInfo === undefined) {
-                res({
-                    message: 'Not in client listing'
-                })
-                return
             }
 
             if (this.raceStatus !== 'betting') {
