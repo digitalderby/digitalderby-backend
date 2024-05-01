@@ -9,7 +9,7 @@ import { createRace } from './horse/localHorses.js'
 import { BetInfo } from './betInfo.js'
 import jwt from 'jsonwebtoken'
 import { jwtSecret } from '../auth/secrets.js'
-import { server } from '../app.js'
+import { args, server } from '../app.js'
 import GameLog from '../models/GameLog.js'
 import { User, UserSpec } from '../models/User.js'
 import { BETTING_DELAY, CHEAT_MODE, HORSES_PER_RACE, MINIMUM_BET, PRERACE_DELAY, RACE_LENGTH, RESULTS_DELAY, SERVER_TICK_RATE_MS } from '../config/globalsettings.js'
@@ -644,6 +644,11 @@ export class GameServer {
     }
 
     async commitGame(): Promise<void> {
+        if (args.readOnly) {
+            console.log('Not writing to database; read only mode.')
+            return
+        }
+
         console.log('Writing game results to database...')
         if (this.race === null || this.raceStates === null) { return }
         const lastRaceState = this.raceStates[this.raceStates.length-1]

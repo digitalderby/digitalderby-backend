@@ -21,11 +21,14 @@ import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
 import { AUTOSTART } from './config/globalsettings.js'
 
+import minimist from 'minimist'
+const argv = minimist(process.argv.slice(2))
+
 export const args = {
     readOnly: false,
 }
 
-if (args['read-only']) {
+if (argv['read-only']) {
     console.log('Read-only mode enabled')
     args.readOnly = true
 }

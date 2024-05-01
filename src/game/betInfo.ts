@@ -1,5 +1,6 @@
 import { Types } from "mongoose"
 import { User } from "../models/User.js"
+import { args } from "../app.js"
 
 export class BetInfo {
     username: string
@@ -36,22 +37,24 @@ export class BetInfo {
         const difference = this.returns - this.betValue
         console.log(`Adding ${difference} to ${this.username}'s balance`)
 
-        await User.updateOne(
-            { _id: this.id },
-            {
-                $inc: {
-                    "profile.wallet": difference
-                },
-                $push: {
-                    "profile.betLog": {
-                        gameId: gameId,
-                        horseId: this.horseId,
-                        betValue: this.betValue,
-                        returns: this.returns,
+        if (!args.readOnly) {
+            await User.updateOne(
+                { _id: this.id },
+                {
+                    $inc: {
+                        "profile.wallet": difference
+                    },
+                    $push: {
+                        "profile.betLog": {
+                            gameId: gameId,
+                            horseId: this.horseId,
+                            betValue: this.betValue,
+                            returns: this.returns,
+                        }
                     }
-                }
-            },
-        )
+                },
+            )
+        }
 
         console.log('Successfully wrote the bet to database')
     }
