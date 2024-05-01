@@ -44,5 +44,4 @@ function applyRainEffectToRandomHorse(horses: Horse[], isRaining: boolean): void
   }
 }
 
-// Export the function to be used in other parts of your application
 export { applyRainEffectToRandomHorse };
