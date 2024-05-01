@@ -19,49 +19,42 @@ console.log(`Pre-race delay: ${PRERACE_DELAY}`)
 console.log(`Results delay: ${RESULTS_DELAY}`)
 
 export interface raceDetailsSchema {
-    // Name of the horse.
-    horseName: string,
-    // ID of the horse.
-    horseId: string,
-    // Color of the horse.
-    horseColor: string,
-    // Icons of the horse.
-    horseIcons: string[],
+    horses: {
+        // Name of the horse.
+        horseName: string,
+        // ID of the horse.
+        horseId: string,
+        // Color of the horse.
+        horseColor: string,
+        // Icons of the horse.
+        horseIcons: string[],
+    }[]
     // Length of the race in units.
-    raceLength: string,
+    raceLength: number,
 }
 
-export interface betStateSchema {
-    // Current status- use this to discriminate between the different
-    // game states.
-    status: 'betting',
+export interface generalStateSchema {
     // Number of connected clients.
     numClients: number,
     lag: number,
 
     // Currently queued race- information on each specific horse.
     race: raceDetailsSchema,
-    // Timestamp representing when the next race will start.
-    raceStartTime: Date,
     // Current value of the betting pool.
     currentPoolValue: number,
 }
 
-export interface raceStateSchema {
-    // Current status- use this to discriminate between the different
-    // game states.
-    status: 'race',
-    // Number of connected clients.
-    numClients: number,
-    lag: number,
+export interface betStateSchema extends generalStateSchema {
+    status: 'betting',
+    // Timestamp representing when the next race will start.
+    raceStartTime: Date,
+}
 
-    // Currently queued race- information on each specific horse.
-    race: raceDetailsSchema,
+export interface raceStateSchema extends generalStateSchema {
+    status: 'race',
     // Timestamp representing when the horse simulation will begin. Will
     // be null if the race has already started.
     preraceStartTime?: Date,
-    // Current value of the betting pool.
-    currentPoolValue: number,
 
     // Array of event messages sent from the server when an event happens
     // during the race.
@@ -87,24 +80,14 @@ export interface raceStateSchema {
     }
 }
 
-export interface resultsSchema {
-    // Current status- use this to discriminate between the different
-    // game states.
-    status: 'race',
-    // Number of connected clients.
-    numClients: number,
-    lag: number,
-
-    // Currently queued race- information on each specific horse.
-    race: raceDetailsSchema,
-    // Timestamp representing when the next race will begin.
+export interface resultsSchema extends generalStateSchema {
+    status: 'results',
     nextRaceStartTime: Date,
-    // Current value of the betting pool.
-    currentPoolValue: number,
 
     // Rankings of each horse: rankings[0] is the index of the horse in 1st,
     // rankings[1] is the index of the horse in 2nd, etc.
     rankings: number[],
+    finishTimes: (number | null)[]
 }
 
 const ServerInactiveError = {
@@ -140,10 +123,13 @@ export class GameServer {
 
     /** Timer that ticks down to zero in betting mode before a race begins. */
     bettingTimer: number = 0
+    bettingEndTimestamp: Date = new Date()
     /** Timer that ticks down to zero in race mode before a race begins. */
     preRaceTimer: number = 0
+    preraceEndTimestamp: Date | null = null
     /** Timer that ticks down to zero in results mode before a new round begins. */
     resultsTimer: number = 0
+    resultsEndTimestamp: Date = new Date()
 
     _loopCancelFunction: (() => void) | null = null
 
@@ -481,6 +467,75 @@ export class GameServer {
             this.startBettingMode()
             break;
         }
+    }
+
+    emitStateV2(lag: bigint): void {
+        if (this.io === null) { return }
+
+        if (this.race === null) { return }
+
+        let payload: resultsSchema | raceStateSchema | betStateSchema 
+        const general: generalStateSchema = {
+
+            numClients: this.clients.size,
+            lag: Number(lag),
+            race: {
+                horses: this.race.horses.map((h) => ({
+                    horseName: h.spec.name,
+                    horseId: h.spec._id.toString(),
+                    horseColor: h.spec.color,
+                    horseIcons: h.spec.icons,
+                })),
+                raceLength: this.race.length,
+            },
+            currentPoolValue: this.totalPool,
+        }
+
+        switch(this.raceStatus) {
+            case 'betting': {
+                payload = {
+                    ...general,
+                    status: 'betting',
+                    raceStartTime: this.bettingEndTimestamp,
+                }
+                break;
+            }
+            case 'race': {
+                if (this.raceStates === null) { return }
+                const lastState = this.raceStates[this.raceStates.length-1]
+                payload = {
+                    ...general,
+                    status: 'race',
+                    preraceStartTime: (this.preraceEndTimestamp === null)
+                    ? undefined : this.preraceEndTimestamp,
+                    eventMessages: this.messages,
+                    raceState: {
+                        horseStates: lastState.horseStates.map((hs) => ({
+                            position: hs.position,
+                            speed: hs.currentSpeed,
+                            isFinished: hs.finishTime !== null,
+                            finishTime: (hs.finishTime !== null) ? hs.finishTime : undefined,
+                        })),
+                        rankings: lastState.rankings,
+                    },
+                }
+                break;
+            }
+            case 'results': {
+                if (this.raceStates === null) { return }
+                const lastState = this.raceStates[this.raceStates.length-1]
+                payload = {
+                    ...general,
+                    status: 'results',
+                    nextRaceStartTime: this.resultsEndTimestamp,
+                    rankings: lastState.rankings,
+                    finishTimes: lastState.horseStates.map((hs) => hs.finishTime),
+                }
+                break;
+            }
+        }
+
+        this.io.of('/user').emit('gamestate', payload)
     }
 
     emitStateV1(lag: bigint): void {
