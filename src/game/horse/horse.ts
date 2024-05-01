@@ -1,8 +1,8 @@
 import { HorseSpec, } from "../../models/Horse.js";
 
-export const SPEED_BOUNDS = [50, 100]
-export const ACCELERATION_BOUNDS = [1,5]
-export const STAMINA_BOUNDS = [500, 600]
+export const SPEED_BOUNDS = [200, 250]
+export const ACCELERATION_BOUNDS = [1,9]
+export const STAMINA_BOUNDS = [500, 550]
 
 function interpolate(specStatValue: number, bounds: Array<number>): number {
     const normalized = (specStatValue - 3)/17
@@ -15,6 +15,8 @@ export class InternalHorse {
     topSpeed: number;
     stamina: number;
     acceleration: number;
+
+    mode: 'low' | 'mid' | 'high' = 'mid'
 
     constructor(horseSpec: HorseSpec) {
         this.spec = horseSpec
