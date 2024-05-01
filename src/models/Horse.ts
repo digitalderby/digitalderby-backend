@@ -1,6 +1,6 @@
 import mongoose, { Types } from 'mongoose'
 import { randRange, randomIndicesNoReplacement, rollDiceDropLowest } from '../random/random.js'
-import { HORSE_POPULATION } from '../game/horse/localHorses.js'
+import { HORSE_POPULATION } from '../config/globalsettings.js'
 
 const firstNames = [
     'Dashing',
