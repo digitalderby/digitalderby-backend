@@ -32,6 +32,8 @@ export interface raceDetailsSchema {
     }[]
     // Length of the race in units.
     raceLength: number,
+    // Weather conditions
+    weatherConditions: string,
 }
 
 export interface generalStateSchema {
@@ -535,6 +537,7 @@ export class GameServer {
                     horseIcons: h.spec.icons,
                 })),
                 raceLength: this.race.length,
+                weatherConditions: this.race.weatherConditions?.name || 'Clear',
             },
             currentPoolValue: this.totalPool,
             minimumBet: MINIMUM_BET,
