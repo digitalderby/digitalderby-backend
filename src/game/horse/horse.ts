@@ -14,7 +14,7 @@ export const MODE_DURATION = 4000
 
 export const TRIP_LOW_SPEED = 500
 export const TRIP_HIGH_SPEED = 1200
-export const TRIP_PROBABILITY = (SERVER_TICK_RATE_MS/(1000 * 20))
+export const TRIP_PROBABILITY = (SERVER_TICK_RATE_MS/(1000 * 10))
 export const TRIP_DURATION_MS = 1000
 
 function interpolate(specStatValue: number, bounds: Array<number>): number {

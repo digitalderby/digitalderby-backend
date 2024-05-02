@@ -1,6 +1,6 @@
 import { RACE_LENGTH } from "../config/globalsettings.js";
 import { InternalHorse, TRIP_PROBABILITY } from "./horse/horse.js";
-import { WeatherEffect } from "./weatherEffects.js";
+import { WeatherEffect, rollForWeatherEffect } from "./weatherEffects.js";
 
 export class Race {
     horses: Array<InternalHorse>
@@ -14,5 +14,7 @@ export class Race {
     constructor(horses: Array<InternalHorse>) {
         this.horses = horses 
         this.length = RACE_LENGTH
+
+        this.weatherConditions = rollForWeatherEffect()
     }
 }

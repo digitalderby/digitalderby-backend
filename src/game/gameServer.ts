@@ -410,6 +410,7 @@ export class GameServer {
         console.log('Entering betting mode')
         this.raceStatus = 'betting'
         this.race = createRace()
+        console.log(this.race?.weatherConditions)
         this.bettingTimer = BETTING_DELAY * 1000
         this.bettingEndTimestamp = new Date(Date.now() + BETTING_DELAY * 1000)
         this.raceStates = null
