@@ -33,7 +33,6 @@ export async function getUserByUsername(
     sendJSONError(res, 500, `Internal error retrieving user: ${error}`);
   }
 }
-// EVERYTHING ABOVE THIS LINE IS THE SAME AS BEFORE
 
 // Function to create a new user
 export async function createUser(
