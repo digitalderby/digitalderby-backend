@@ -69,3 +69,23 @@ export function rollDiceDropLowest(d: number, n: number, k: number): number {
     let topK = dice.slice(n-k, n)
     return topK.reduce((a,b) => a+b, 0)
 }
+
+export function weightedRandom<T>(objects: { value: T, weight: number }[]): T {
+    const buckets = Array(objects.length+1).fill(0)
+    for (let i = 0; i < objects.length; i++) {
+        buckets[i+1] = objects[i].weight + buckets[i]
+    }
+    const value = Math.random() * buckets[objects.length]
+    let lo = 0
+    let hi = objects.length
+    while (lo < hi) {
+        const mid = lo + Math.floor((hi - lo)/2)
+        if (value < buckets[mid]) {
+            hi = mid
+        } else {
+            lo = mid+1
+        }
+    }
+
+    return objects[hi-1].value
+}
