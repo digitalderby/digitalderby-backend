@@ -308,7 +308,6 @@ export class GameServer {
             const currentBet = this.bets.get(clientInfo.username)
             if (currentBet !== undefined) {
                 this.bets.delete(clientInfo.username)
-                this.pool[currentBet.horseIdx] -= currentBet.betValue
             } 
 
             if (betValue > clientInfo.wallet) {
@@ -340,9 +339,7 @@ export class GameServer {
                 horseId: this.race.horses[horseIdx].spec._id,
             }))
 
-            this.pool[horseIdx] += betValue
-            this.totalPool = this.pool.reduce((a,b) => a+b, 0)*2
-
+            this.recomputePool()
             this.emitClientStatus(clientInfo)
             this.broadcastStateV2()
 
@@ -371,10 +368,9 @@ export class GameServer {
             const currentBet = this.bets.get(clientInfo.username)
             if (currentBet !== undefined) {
                 this.bets.delete(clientInfo.username)
-                this.pool[currentBet.horseIdx] -= currentBet.betValue
-                this.totalPool = this.pool.reduce((a,b) => a+b, 0)*2
             } 
 
+            this.recomputePool()
             this.emitClientStatus(clientInfo)
             this.broadcastStateV2()
 
@@ -435,6 +431,7 @@ export class GameServer {
         this.preraceEndTimestamp = new Date(Date.now() + PRERACE_DELAY * 1000)
         if (this.race === null) { throw new Error('no race') }
 
+        this.recomputePool()
         console.log(`Current pool: ${this.pool}`)
         console.log(`Total: ${this.totalPool}`)
 
@@ -633,6 +630,15 @@ export class GameServer {
                     : this.raceStates[this.raceStates.length-1]
             })
             break;
+        }
+    }
+
+    recomputePool(): void {
+        this.pool = Array(HORSES_PER_RACE).fill(0)
+        this.totalPool = 0
+        for (const bet of this.bets.values()) {
+            this.pool[bet.horseIdx] += bet.betValue
+            this.totalPool += bet.betValue*2
         }
     }
 
