@@ -158,6 +158,8 @@ export class RaceState {
 
             staminaChange *= dt
 
+            if (staminaChange < 0) { staminaChange *= race.staminaDrainFactor }
+
             nextHs.currentStamina = 
                 Math.min(hs.horse.stamina,
                          Math.max(0, hs.currentStamina + staminaChange))
