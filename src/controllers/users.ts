@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { sendJSONError } from "../errorHandler.js";
 import { User } from "../models/User.js";
+import bcrypt from "bcrypt";
 
 export async function getAllUsers(
   req: Request,
@@ -58,36 +59,53 @@ export async function createUser(
   }
 }
 
-// Function to update a user by ID
-export async function updateUser(
+// Function to update a user by Username
+export async function updateUserByUsername(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
   try {
-    // Extract user ID from request parameters
-    const userIdToUpdate = req.params.userId;
+    // Extract username from request parameters
+    const usernameToUpdate = req.params.username;
 
     // Extract updated user data from request body
     const updatedUserData = req.body;
 
-    // Find the user by ID and update it
-    const updatedUser = await User.findByIdAndUpdate(
-      userIdToUpdate,
+    // Check if password field is present in updated data
+    if (updatedUserData.password) {
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(updatedUserData.password, 10);
+
+      // Update the password in the updated data with the hashed password
+      updatedUserData.password = hashedPassword;
+    }
+
+    // Find the user by username and update it
+    const updatedUser = await User.findOneAndUpdate(
+      { username: usernameToUpdate }, // Query by username
       updatedUserData,
       { new: true }
     );
 
     // If user does not exist, return 404 Not Found
     if (!updatedUser) {
-      return sendJSONError(res, 404, `User ${userIdToUpdate} not found`);
+      return sendJSONError(
+        res,
+        404,
+        `User with username ${usernameToUpdate} not found`
+      );
     }
 
     // Return the updated user in the response
     res.status(200).json(updatedUser);
   } catch (error) {
     // Handle errors
-    sendJSONError(res, 500, `Internal error updating user: ${error}`);
+    sendJSONError(
+      res,
+      500,
+      `Internal error updating user by username: ${error}`
+    );
   }
 }
 
