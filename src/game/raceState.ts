@@ -79,14 +79,35 @@ export class RaceState {
 
     nextState(race: Race): RaceState {
         let next = new RaceState()        
+
+        let queuedStatusEffects: {
+            status: StatusEffect,
+            horseIdx: number,
+        }[] = []
+
         next.time = this.time + SERVER_TICK_RATE_MS
-        next.horseStates = this.horseStates.map((hs, i) => {
+        // Perform movement/stamina updates for the horse state.
+        next.horseStates = this.horseStates.map((hs, horseIdx) => {
             if (hs.finishTime !== null) { return hs }
             let nextHs = new HorseState(hs.horse)
 
             const staminaPercent = hs.currentStamina / hs.horse.stamina
-            const currentPlacement = this.placement(i)
+            const currentPlacement = this.placement(horseIdx)
             const positionPercent = hs.position/RACE_LENGTH
+
+            // Tick down status effects.
+            for (const status of hs.statusEffects) {
+                if (status.duration >= 0) {
+                    nextHs.statusEffects.push({
+                        name: status.name,
+                        duration: status.duration - SERVER_TICK_RATE_MS,
+                    })
+                }
+            }
+
+            const trip = hs.hasStatus('trip')
+
+            // Calculate modifiers based on current stats.
 
             let targetSpeed =
                 (hs.speedMode === 'high')
@@ -96,7 +117,6 @@ export class RaceState {
                   : hs.horse.lowSpeed
 
             // If the horse tripped, set target speed to 0.
-            const trip = hs.hasStatus('trip')
             if (trip) {
                 targetSpeed = 0
             }
@@ -167,29 +187,28 @@ export class RaceState {
             // otherwise, at the speed defined by the mode buff
             nextHs.speedMode = (nextHs.modeBuff === null) ? 'mid' : nextHs.modeBuff.mode
 
-            // Tick down status effects.
-            for (const status of hs.statusEffects) {
-                if (status.duration >= 0) {
-                    nextHs.statusEffects.push({
-                        name: status.name,
-                        duration: status.duration - SERVER_TICK_RATE_MS,
-                    })
-                }
-            }
-
             // If the horse hasn't tripped, every tick add a mild probability
             // the horse trips.
             const tripFactor = (hs.currentSpeed - TRIP_LOW_SPEED)/
                 (TRIP_HIGH_SPEED - TRIP_LOW_SPEED)
             if (!trip && Math.random() < tripFactor * race.tripProbability) {
-                nextHs.statusEffects.push({
+                queuedStatusEffects.push({
+                    horseIdx: horseIdx,
+                    status: {
                     name: 'trip',
                     duration: TRIP_DURATION_MS,
+                    },
                 })
             }
 
             return nextHs
         })
+
+        // Apply all queued status effects to the horses
+        for (const { horseIdx, status } of queuedStatusEffects) {
+            next.horseStates[horseIdx].statusEffects.push(status)
+        }
+
         next.rankings = Array.from(
             {length: this.horseStates.length},
             (_, i) => i)
