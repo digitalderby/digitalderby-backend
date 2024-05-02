@@ -9,6 +9,7 @@ interface IUser {
 interface IProfile {
     betLog: IBet[],
     wallet: number,
+    bankruptcies: number,
 }
 
 interface IBet {
@@ -16,6 +17,7 @@ interface IBet {
     horseId: mongoose.Types.ObjectId,
     betValue: number,
     returns: number,
+    wentBankrupt: boolean,
 }
 
 const betSchema = new mongoose.Schema<IBet>({
@@ -36,6 +38,10 @@ const betSchema = new mongoose.Schema<IBet>({
     returns: {
         type: Number,
         required: true,
+    },
+    wentBankrupt: {
+        type: Boolean,
+        required: true,
     }
 })
 
@@ -44,6 +50,10 @@ const profileSchema = new mongoose.Schema<IProfile>({
         type: betSchema,
     }],
     wallet: {
+        type: Number,
+        required: true,
+    },
+    bankruptcies: {
         type: Number,
         required: true,
     }

@@ -1,4 +1,4 @@
-import { Types } from "mongoose"
+import { Types, UpdateQuery } from "mongoose"
 import { User } from "../models/User.js"
 
 export class BetInfo {
@@ -11,6 +11,7 @@ export class BetInfo {
     horseId: Types.ObjectId 
     // Returns
     returns: number = 0
+    wentBankrupt: boolean = false
 
     constructor({
         username,
@@ -36,21 +37,37 @@ export class BetInfo {
         const difference = this.returns - this.betValue
         console.log(`Adding ${difference} to ${this.username}'s balance`)
 
-        await User.updateOne(
-            { _id: this.id },
-            {
+        let update: any = {
+            $push: {
+                "profile.betLog": {
+                    gameId: gameId,
+                    horseId: this.horseId,
+                    betValue: this.betValue,
+                    returns: this.returns,
+                }
+            }
+        }
+
+        if (this.wentBankrupt) {
+            update = {
+                ...update,
+                "profile.wallet": difference,
+                $inc: {
+                    "profile.bankruptcies": 1,
+                },
+            }
+        } else {
+            update = {
+                ...update,
                 $inc: {
                     "profile.wallet": difference
                 },
-                $push: {
-                    "profile.betLog": {
-                        gameId: gameId,
-                        horseId: this.horseId,
-                        betValue: this.betValue,
-                        returns: this.returns,
-                    }
-                }
-            },
+            }
+        }
+
+        await User.updateOne(
+            { _id: this.id },
+            update
         )
 
         console.log('Successfully wrote the bet to database')

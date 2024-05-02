@@ -15,6 +15,7 @@ export default async function CreateAdminUser() {
         profile: {
             betLog: [],
             wallet: DEFAULT_WALLET,
+            bankruptcies: 0,
         }
     })
 }
