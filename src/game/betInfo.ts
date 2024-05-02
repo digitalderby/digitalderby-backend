@@ -36,7 +36,6 @@ export class BetInfo {
 
     async commit(gameId: Types.ObjectId) {
         const difference = this.returns - this.betValue
-        console.log(`Adding ${difference} to ${this.username}'s balance`)
 
         let update: any = {
             $push: {
@@ -50,6 +49,7 @@ export class BetInfo {
         }
 
         if (this.wentBankrupt) {
+            console.log(`${this.username} went bankrupt- setting their balance to ${DEFAULT_WALLET}`)
             update = {
                 ...update,
                 "profile.wallet": DEFAULT_WALLET,
@@ -58,6 +58,7 @@ export class BetInfo {
                 },
             }
         } else {
+            console.log(`Adding ${difference} to ${this.username}'s balance`)
             update = {
                 ...update,
                 $inc: {
