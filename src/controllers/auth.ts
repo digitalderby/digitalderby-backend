@@ -17,6 +17,10 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
         return sendJSONError(res, 409, `Password is too short`)
     }
 
+    if (req.body.username === 'admin') {
+        return sendJSONError(res, 401, `Nice try.`)
+    }
+
     const passwordHash = await saltPassword(req.body.password)
 
     try {
@@ -56,7 +60,10 @@ export async function loginAsUser(req: Request, res: Response, next: NextFunctio
         }
 
         const loginToken = jwt.sign(
-            { username: req.body.username },
+            { 
+                username: req.body.username,
+                isAdmin: req.body.username === 'admin',
+            },
             jwtSecret,
             { expiresIn: '1d' },
         )
@@ -76,6 +83,11 @@ export async function deleteLoggedInUser(req: Request, res: Response, next: Next
     try {
         // Check if the user is in the database first
         const userToDelete = req.body.jwtPayload.username;
+
+        // Cannot delete the admin
+        if (req.body.jwtPayload.username === 'admin') {
+            return sendJSONError(res, 409, 'Cannot delete admin user')
+        }
 
         const user = await User.findOne(userToDelete);
 

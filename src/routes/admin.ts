@@ -3,7 +3,6 @@ import { loggedInAsAdmin } from '../auth/authentication.js'
 import { 
     createNewHorses,
     getServerSettings,
-    loginAsAdmin,
     startRaceAndAutostart,
     toggleAutostart,
     getServerStatus,
@@ -13,8 +12,6 @@ import {
 } from '../controllers/admin.js'
 
 const router = express.Router()
-
-router.post('/login', loginAsAdmin)
 
 router.get('/settings', loggedInAsAdmin, getServerSettings)
 router.get('/serverStatus', getServerStatus)

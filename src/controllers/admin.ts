@@ -1,28 +1,8 @@
-import jwt from 'jsonwebtoken'
 import { NextFunction, Request, Response } from "express"
 import gameServer from "../game/gameServer.js"
-import { verifyPassword } from "../auth/password.js"
-import { adminPasswordHash, jwtSecret } from '../auth/secrets.js'
-import { Horse, IHorse, generateNewHorses } from '../models/Horse.js'
+import { Horse, generateNewHorses } from '../models/Horse.js'
 import { sendJSONError } from '../errorHandler.js'
 import { generateLocalHorsesFromSpecs } from '../game/horse/localHorses.js'
-
-export async function loginAsAdmin(req: Request, res: Response, next: NextFunction) {
-    if (!(await verifyPassword(req.body.password, adminPasswordHash))) {
-        return next({ status: 400, message: 'Could not login as admin' })
-    }
-    const payload = { isAdmin: true }
-    const token = jwt.sign(
-        payload,
-        jwtSecret,
-        { expiresIn: '1d' },
-    )
-
-    res.status(200).json({
-        message: 'Created admin token',
-        token: token,
-    })
-}
 
 export async function getServerSettings(req: Request, res: Response, next: NextFunction) {
     res.status(200).json({
