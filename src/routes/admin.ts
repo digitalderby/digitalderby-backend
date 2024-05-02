@@ -1,7 +1,7 @@
 import express from 'express'
 import { loggedInAsAdmin } from '../auth/authentication.js'
 import { 
-    createNewHorses,
+    purgeHorses,
     getServerSettings,
     startRaceAndAutostart,
     toggleAutostart,
@@ -23,6 +23,6 @@ router.post('/stopRaceServer', loggedInAsAdmin, closeRaceServer)
 router.post('/startRaceLoop', loggedInAsAdmin, startRaceLoop)
 router.post('/startRaceAndAutostart', loggedInAsAdmin, startRaceAndAutostart)
 
-router.post('/newHorses', loggedInAsAdmin, createNewHorses)
+router.post('/newHorses', loggedInAsAdmin, purgeHorses)
 
 export default router

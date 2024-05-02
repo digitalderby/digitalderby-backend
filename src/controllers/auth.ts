@@ -28,7 +28,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
             username: req.body.username,
             passwordHash: passwordHash,
             profile: {
-                betLog: [],
+                bets: [],
                 wallet: DEFAULT_WALLET,
                 bankruptcies: 0,
             }

@@ -3,6 +3,7 @@ import gameServer from "../game/gameServer.js"
 import { Horse, generateNewHorses } from '../models/Horse.js'
 import { sendJSONError } from '../errorHandler.js'
 import { generateLocalHorsesFromSpecs } from '../game/horse/localHorses.js'
+import purge from "../purge.js"
 
 export async function getServerSettings(req: Request, res: Response, next: NextFunction) {
     res.status(200).json({
@@ -47,10 +48,10 @@ export async function toggleAutostart(req: Request, res: Response, next: NextFun
     })
 }
 
-export async function createNewHorses(req: Request, res: Response, next: NextFunction) {
+export async function purgeHorses(req: Request, res: Response, next: NextFunction) {
     try {
         // Delete all horses already in the database first
-        await Horse.deleteMany({})
+        await purge()
 
         let horses = generateNewHorses()
             .map((h) => new Horse(h))
