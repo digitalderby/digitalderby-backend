@@ -9,7 +9,6 @@ import { createRace } from './horse/localHorses.js'
 import { BetInfo } from './betInfo.js'
 import jwt from 'jsonwebtoken'
 import { jwtSecret } from '../auth/secrets.js'
-import { server } from '../app.js'
 import GameLog from '../models/GameLog.js'
 import { User, UserSpec } from '../models/User.js'
 import { BETTING_DELAY, CHEAT_MODE, HORSES_PER_RACE, MINIMUM_BET, PRERACE_DELAY, RACE_LENGTH, RESULTS_DELAY, SERVER_TICK_RATE_MS } from '../config/globalsettings.js'
@@ -32,6 +31,8 @@ export interface raceDetailsSchema {
     }[]
     // Length of the race in units.
     raceLength: number,
+    // Weather conditions
+    weatherConditions: string,
 }
 
 export interface generalStateSchema {
@@ -409,6 +410,7 @@ export class GameServer {
         console.log('Entering betting mode')
         this.raceStatus = 'betting'
         this.race = createRace()
+        console.log(this.race?.weatherConditions)
         this.bettingTimer = BETTING_DELAY * 1000
         this.bettingEndTimestamp = new Date(Date.now() + BETTING_DELAY * 1000)
         this.raceStates = null
@@ -494,8 +496,9 @@ export class GameServer {
                 this.startResultsMode()
                 return
             }
+            if (this.race === null) { throw new Error('no race') }
 
-            const nextState = currentState.nextState()
+            const nextState = currentState.nextState(this.race)
             this.raceStates.push(nextState)
             break;
         case 'results':
@@ -534,6 +537,7 @@ export class GameServer {
                     horseIcons: h.spec.icons,
                 })),
                 raceLength: this.race.length,
+                weatherConditions: this.race.weatherConditions?.name || 'Clear',
             },
             currentPoolValue: this.totalPool,
             minimumBet: MINIMUM_BET,
