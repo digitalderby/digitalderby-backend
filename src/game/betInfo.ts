@@ -1,5 +1,6 @@
 import { Types, UpdateQuery } from "mongoose"
 import { User } from "../models/User.js"
+import { DEFAULT_WALLET } from "../config/globalsettings.js"
 
 export class BetInfo {
     username: string
@@ -51,7 +52,7 @@ export class BetInfo {
         if (this.wentBankrupt) {
             update = {
                 ...update,
-                "profile.wallet": difference,
+                "profile.wallet": DEFAULT_WALLET,
                 $inc: {
                     "profile.bankruptcies": 1,
                 },
