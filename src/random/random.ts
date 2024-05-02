@@ -76,16 +76,11 @@ export function weightedRandom<T>(objects: { value: T, weight: number }[]): T {
         buckets[i+1] = objects[i].weight + buckets[i]
     }
     const value = Math.random() * buckets[objects.length]
-    let lo = 0
-    let hi = objects.length
-    while (lo < hi) {
-        const mid = lo + Math.floor((hi - lo)/2)
-        if (value < buckets[mid]) {
-            hi = mid
-        } else {
-            lo = mid+1
+
+    for (let i = 0; i < objects.length; i++) {
+        if (buckets[i] <= value && buckets[i+1] > value) {
+            return objects[i].value
         }
     }
-
-    return objects[hi-1].value
+    return objects[0].value
 }
