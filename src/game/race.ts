@@ -10,6 +10,7 @@ export class Race {
     staminaDrainFactor = 1
 
     weatherConditions: WeatherEffect | null = null
+    horseStates: any;
 
     constructor(horses: Array<InternalHorse>) {
         this.horses = horses 

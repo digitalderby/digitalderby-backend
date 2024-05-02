@@ -13,6 +13,7 @@ import GameLog from '../models/GameLog.js'
 import { User, UserSpec } from '../models/User.js'
 import { BETTING_DELAY, CHEAT_MODE, HORSES_PER_RACE, MINIMUM_BET, PRERACE_DELAY, RACE_LENGTH, RESULTS_DELAY, SERVER_TICK_RATE_MS } from '../config/globalsettings.js'
 import { Types } from 'mongoose'
+import { HorseState } from './raceState.js'  // Imported for the generateCommentary function
 
 console.log(`Betting delay: ${BETTING_DELAY}`)
 console.log(`Pre-race delay: ${PRERACE_DELAY}`)
@@ -512,6 +513,39 @@ export class GameServer {
             break;
         }
     }
+
+    // -------- NEWLY CREATED FUNCTION --------- //
+    // HorseState and horseState need to be replaced with the actual HorseState
+    generateCommentary(): string[] {
+        const comments: string[] = [];
+        if (!this.race || !this.race.horseStates) {
+            return comments;  // Return empty if no race or horseStates is undefined
+        }
+    
+        this.race.horseStates.forEach((horseState: HorseState, index: number) => {
+            if (horseState.finishTime !== null) {
+                const finishComment = `Horse ${index + 1} finishes the race!`;
+                comments.push(finishComment); 
+                console.log(finishComment);  // for debugging
+            } else {
+                const positionComment = `Horse ${index + 1} at position ${horseState.position.toFixed(2)} moving at speed ${horseState.currentSpeed.toFixed(2)}.`;
+                comments.push(positionComment);
+                console.log(positionComment);   // for debugging
+            }
+    
+            this.race.horseStates.forEach((otherHorseState: HorseState, otherIndex: number) => {
+                if (index !== otherIndex && horseState.position > otherHorseState.position && horseState.position - horseState.currentSpeed <= otherHorseState.position) {
+                    const overtakeComment = `Horse ${index + 1} overtakes Horse ${otherIndex + 1}!`;
+                    comments.push(overtakeComment);
+                    console.log(overtakeComment);  // for debugging
+                }
+            });
+        });
+        return comments;
+    }
+    
+    // -------- NEWLY CREATED FUNCTION --------- //
+
 
     broadcastStateV2(lag?: bigint): void {
         if (this.io === null) { return }
