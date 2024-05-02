@@ -20,6 +20,7 @@ import bodyParser from 'body-parser'
 import swaggerUi from 'swagger-ui-express'
 import YAML from 'yamljs'
 import { AUTOSTART } from './config/globalsettings.js'
+import CreateAdminUser from './auth/admin.js'
 
 export const args = {
     readOnly: false,
@@ -62,6 +63,8 @@ app.use(
     swaggerUi.serve,
     swaggerUi.setup(YAML.load('./api-docs.yaml'), swaggerOptions)
 )
+
+await CreateAdminUser()
 
 gameServer.createServer(server)
 
