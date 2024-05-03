@@ -1,32 +1,36 @@
-import mongoose, { Schema } from 'mongoose'
+import mongoose, { Schema } from 'mongoose';
 
 interface IGameResults {
-    rankings: number[]
+  rankings: number[];
 }
 
 interface IGameLog {
-    horses: mongoose.Types.ObjectId[],
-    results: IGameResults,
+  horses: mongoose.Types.ObjectId[];
+  results: IGameResults;
 }
 
-const gameResultsSchema = new mongoose.Schema<IGameResults> ({
-    rankings: [{
-        type: Number,
-    }]
-})
-
-const gameLogSchema = new mongoose.Schema<IGameLog> (
+const gameResultsSchema = new mongoose.Schema<IGameResults>({
+  rankings: [
     {
-        horses: [{
-            type: Schema.Types.ObjectId,
-            ref: 'Horse',
-        }],
-        results: {
-            type: gameResultsSchema,
-            required: true,
-        }
+      type: Number,
     },
-    { timestamps: true, }
-)
+  ],
+});
 
-export default mongoose.model('GameLog', gameLogSchema)
+const gameLogSchema = new mongoose.Schema<IGameLog>(
+  {
+    horses: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Horse',
+      },
+    ],
+    results: {
+      type: gameResultsSchema,
+      required: true,
+    },
+  },
+  { timestamps: true },
+);
+
+export default mongoose.model('GameLog', gameLogSchema);

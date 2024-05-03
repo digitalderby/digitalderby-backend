@@ -1,11 +1,11 @@
-import express from 'express'
-import dummyRouter from '../dummyHandler.js'
+import express from 'express';
+import dummyRouter from '../dummyHandler.js';
 
-const router = express.Router()
+const router = express.Router();
 
-router.get('/', dummyRouter)
-router.get('/lastGame', dummyRouter)
-router.get('/:id', dummyRouter)
-router.get('/:id/horses', dummyRouter)
+router.get('/', dummyRouter);
+router.get('/lastGame', dummyRouter);
+router.get('/:id', dummyRouter);
+router.get('/:id/horses', dummyRouter);
 
-export default router
+export default router;

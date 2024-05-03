@@ -1,14 +1,14 @@
-import { NextFunction, Request, Response } from "express";
-import { sendJSONError } from "../errorHandler.js";
-import { User } from "../models/User.js";
+import { NextFunction, Request, Response } from 'express';
+import { sendJSONError } from '../errorHandler.js';
+import { User } from '../models/User.js';
 
 export async function getAllUsers(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
-    const usernames = await User.find({}, "username").lean();
+    const usernames = await User.find({}, 'username').lean();
     res.status(200).json(usernames.map((u) => u.username));
   } catch (error) {
     sendJSONError(res, 500, `Internal error retrieving users: ${error}`);
@@ -18,12 +18,12 @@ export async function getAllUsers(
 export async function getUserByUsername(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     const user = await User.findOne(
       { username: req.params.uname },
-      "-passwordHash"
+      '-passwordHash',
     );
     if (!user) {
       return sendJSONError(res, 404, `User ${req.params.uname} not found`);
@@ -39,7 +39,7 @@ export async function getUserByUsername(
 export async function createUser(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> {
   try {
     // Extract user data from request body
@@ -63,7 +63,7 @@ export async function createUser(
 export async function updateUser(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     // Extract user ID from request parameters
@@ -76,7 +76,7 @@ export async function updateUser(
     const updatedUser = await User.findByIdAndUpdate(
       userIdToUpdate,
       updatedUserData,
-      { new: true }
+      { new: true },
     );
 
     // If user does not exist, return 404 Not Found
@@ -97,7 +97,7 @@ export async function updateUser(
 export async function deleteUser(
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   try {
     // Extract the user ID from request parameters
