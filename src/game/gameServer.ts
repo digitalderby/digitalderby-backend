@@ -131,7 +131,7 @@ export class GameServer {
   pool: number[] = [];
   totalPool: number = 0;
 
-  messages: Array<string> = [];
+  commentary: string[] = [];
 
   lag: bigint = 0n;
   prevTime: bigint = hrTimeMs();
@@ -159,7 +159,7 @@ export class GameServer {
   _loopCancelFunction: (() => void) | null = null;
 
   /** Array of all race states */
-  raceStates: Array<RaceState> | null = null;
+  raceState: RaceState | null = null;
 
   // TODO: add jsdocs
   createServer(server: HTTPServer) {
@@ -174,7 +174,7 @@ export class GameServer {
     });
 
     this.clients = new Map();
-    this.messages = [];
+    this.commentary;
 
     // For each client that connects to the server, set up the corresponding
     // event listeners.
@@ -443,7 +443,7 @@ export class GameServer {
     console.log(this.race?.weatherConditions);
     this.bettingTimer = BETTING_DELAY * 1000;
     this.bettingEndTimestamp = new Date(Date.now() + BETTING_DELAY * 1000);
-    this.raceStates = null;
+    this.raceState = null;
 
     this.bets = new Map();
     this.pool = Array(HORSES_PER_RACE).fill(0);
@@ -469,11 +469,11 @@ export class GameServer {
     console.log(`Current pool: ${this.pool}`);
     console.log(`Total: ${this.totalPool}`);
 
-    this.raceStates = [new RaceState(this.race)];
+    this.raceState = new RaceState(this.race);
 
     // If cheat mode is enabled, always put horses at the end
     if (CHEAT_MODE) {
-      this.raceStates[0].horseStates[0].position = RACE_LENGTH - 1;
+      this.raceState.horseStates[0].position = RACE_LENGTH - 1;
     }
 
     this.broadcastStateV2();
@@ -485,19 +485,18 @@ export class GameServer {
     this.resultsTimer = RESULTS_DELAY * 1000;
     this.resultsEndTimestamp = new Date(Date.now() + RESULTS_DELAY * 1000);
 
-    if (this.raceStates === null) {
+    if (this.raceState === null) {
       throw new Error('Could not enter results mode');
     }
 
     // Get the end state of the race
-    const lastState = this.raceStates[this.raceStates.length - 1];
     for (const bet of this.bets.values()) {
       const client = this.clients.get(bet.username);
       if (client === undefined) {
         continue;
       }
       // For each player who bet on the winning horse, pay them the total pool times the fraction they put on a given horse
-      if (bet.horseIdx === lastState.rankings[0]) {
+      if (bet.horseIdx === this.raceState.rankings[0]) {
         bet.returns =
           this.totalPool * Math.floor(bet.betValue / this.pool[bet.horseIdx]);
       }
@@ -543,12 +542,11 @@ export class GameServer {
 
         // Otherwise, compute the next state and add it to the
         // list of race states in memory
-        if (this.raceStates === null) {
+        if (this.raceState === null) {
           throw new Error('no race states');
         }
-        const currentState = this.raceStates[this.raceStates.length - 1];
 
-        if (currentState.raceOver()) {
+        if (this.raceState.raceOver()) {
           this.startResultsMode();
           return;
         }
@@ -556,8 +554,14 @@ export class GameServer {
           throw new Error('no race');
         }
 
-        const nextState = currentState.nextState(this.race);
-        this.raceStates.push(nextState);
+        const nextState = this.raceState.nextState(this.race);
+
+        // Add new commentary
+        for (const comment of nextState.newMessages) {
+          this.commentary.push(comment);
+        }
+
+        this.raceState = nextState;
         break;
       }
       case 'results': {
@@ -566,7 +570,6 @@ export class GameServer {
           return;
         }
 
-        // start a new race if we're autorestarting
         this.startBettingMode();
         break;
       }
@@ -616,39 +619,37 @@ export class GameServer {
         break;
       }
       case 'race': {
-        if (this.raceStates === null) {
+        if (this.raceState === null) {
           return;
         }
-        const lastState = this.raceStates[this.raceStates.length - 1];
         payload = {
           ...general,
           status: 'race',
           preraceStartTime:
             this.preRaceTimer > 0 ? undefined : this.preraceEndTimestamp,
-          eventMessages: this.messages,
+          eventMessages: this.commentary,
           raceState: {
-            horseStates: lastState.horseStates.map((hs) => ({
+            horseStates: this.raceState.horseStates.map((hs) => ({
               position: hs.position,
               speed: hs.currentSpeed,
               isFinished: hs.finishTime !== null,
               finishTime: hs.finishTime !== null ? hs.finishTime : undefined,
             })),
-            rankings: lastState.rankings,
+            rankings: this.raceState.rankings,
           },
         };
         break;
       }
       case 'results': {
-        if (this.raceStates === null) {
+        if (this.raceState === null) {
           return;
         }
-        const lastState = this.raceStates[this.raceStates.length - 1];
         payload = {
           ...general,
           status: 'results',
           nextRaceStartTime: this.resultsEndTimestamp,
-          rankings: lastState.rankings,
-          finishTimes: lastState.horseStates.map((hs) => hs.finishTime),
+          rankings: this.raceState.rankings,
+          finishTimes: this.raceState.horseStates.map((hs) => hs.finishTime),
         };
         break;
       }
@@ -667,7 +668,7 @@ export class GameServer {
         this.io.of('/user').emit('gamestate', {
           status: this.raceStatus,
           clients: [...this.clients.keys()],
-          messages: this.messages,
+          messages: this.commentary,
           lag: Number(lag),
 
           race: this.race,
@@ -678,28 +679,22 @@ export class GameServer {
         this.io.of('/user').emit('gamestate', {
           status: this.raceStatus,
           clients: [...this.clients.keys()],
-          messages: this.messages,
+          messages: this.commentary,
           lag: Number(lag),
 
           preRaceTimer: this.preRaceTimer,
-          raceStates:
-            this.raceStates === null
-              ? null
-              : this.raceStates[this.raceStates.length - 1],
+          raceStates: this.raceState,
         });
         break;
       case 'results':
         this.io.of('/user').emit('gamestate', {
           status: this.raceStatus,
           clients: [...this.clients.keys()],
-          messages: this.messages,
+          messages: this.commentary,
           lag: Number(lag),
 
           resultsTimer: this.resultsTimer,
-          raceStates:
-            this.raceStates === null
-              ? null
-              : this.raceStates[this.raceStates.length - 1],
+          raceStates: this.raceState,
         });
         break;
     }
@@ -726,16 +721,15 @@ export class GameServer {
 
   async commitGame(): Promise<void> {
     console.log('Writing game results to database...');
-    if (this.race === null || this.raceStates === null) {
+    if (this.race === null || this.raceState === null) {
       return;
     }
-    const lastRaceState = this.raceStates[this.raceStates.length - 1];
 
     // Create a game log object in the database
     const game = await GameLog.create({
       horses: this.race.horses.map((h) => h.spec._id),
       results: {
-        rankings: lastRaceState.rankings,
+        rankings: this.raceState.rankings,
       },
     });
     console.log('Successfully wrote game log to database ');

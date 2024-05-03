@@ -23,6 +23,19 @@ export type StatusEffect = {
   duration: number;
 };
 
+function placementName(placement: number): string {
+  const place = placement + 1;
+  switch (place % 10) {
+    case 1:
+      return `${place}st`;
+    case 2:
+      return `${place}nd`;
+    case 3:
+    default:
+      return `${place}th`;
+  }
+}
+
 export class RaceState {
   horseStates: Array<HorseState> = [];
   rankings: Array<number> = [];
@@ -47,6 +60,8 @@ export class RaceState {
       status: StatusEffect;
       horseIdx: number;
     }[] = [];
+
+    const newFinishes: number[] = [];
 
     next.time = this.time + SERVER_TICK_RATE_MS;
     // Perform movement/stamina updates for the horse state.
@@ -93,6 +108,7 @@ export class RaceState {
       if (nextHs.position >= RACE_LENGTH) {
         nextHs.position = RACE_LENGTH;
         nextHs.finishTime = next.time;
+        newFinishes.push(horseIdx);
       }
 
       // Decelerate if we are faster than the target speed
@@ -176,6 +192,11 @@ export class RaceState {
       return nextHs;
     });
 
+    // Apply all finish commentaries
+    for (const horseIdx of newFinishes) {
+      next.finishCommentary(horseIdx);
+    }
+
     // Apply all queued status effects to the horses
     for (const { horseIdx, status } of queuedStatusEffects) {
       next.horseStates[horseIdx].statusEffects.push(status);
@@ -231,26 +252,9 @@ export class RaceState {
       const currPlacement = this.placement(i);
 
       if (prevPlacement < currPlacement && currPlacement !== 0) {
-        let positionName: string;
-        const place = currPlacement + 1;
-        switch (place % 10) {
-          case 1:
-            positionName = `${place}st`;
-            break;
-          case 2:
-            positionName = `${place}nd`;
-            break;
-          case 3:
-            positionName = `${place}rd`;
-            break;
-          default:
-            positionName = `${place}th`;
-            break;
-        }
-
         const horse = this.horseStates[i].horse;
         this.newMessages.push(
-          `${horse.spec.name} ascends to ${positionName} place!`,
+          `${horse.spec.name} ascends to ${placementName(currPlacement)} place!`,
         );
       }
     }
@@ -270,6 +274,12 @@ export class RaceState {
         }
         break;
     }
+  }
+
+  finishCommentary(horseIdx: number) {
+    const placement = this.placement(horseIdx);
+    const horse = this.horseStates[horseIdx].horse;
+    this.newMessages.push(`${horse.spec.name} finished in ${placement} place!`);
   }
 
   placement(horseIdx: number): number {
