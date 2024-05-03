@@ -4,6 +4,7 @@ import {
   getHorseById,
   getHorsesLastGames,
 } from '../controllers/horses.js';
+import { loggedInAsUser } from '../auth/authentication.js';
 
 const router = express.Router();
 
