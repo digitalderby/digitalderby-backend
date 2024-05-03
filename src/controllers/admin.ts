@@ -25,7 +25,7 @@ export async function closeRaceServer(req: Request, res: Response, next: NextFun
     }
 }
 
-export async function createNewHorses(req: Request, res: Response, next: NextFunction) {
+export async function purgeHorses(req: Request, res: Response, next: NextFunction) {
     try {
         // Delete all horses already in the database first
         await purge()

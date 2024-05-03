@@ -1,12 +1,11 @@
 import express from 'express'
 import { loggedInAsAdmin } from '../auth/authentication.js'
 import { 
-    createNewHorses,
+    purgeHorses,
     getServerStatus,
     openRaceServer,
     closeRaceServer
 } from '../controllers/admin.js'
-import purgeHorses from '../purge.js'
 
 const router = express.Router()
 

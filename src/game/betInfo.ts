@@ -44,6 +44,7 @@ export class BetInfo {
                     horseId: this.horseId,
                     betValue: this.betValue,
                     returns: this.returns,
+                    wentBankrupt: this.wentBankrupt,
                 }
             }
         }

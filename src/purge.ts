@@ -2,7 +2,7 @@ import GameLog from "./models/GameLog.js";
 import { Horse } from "./models/Horse.js";
 import { User } from "./models/User.js";
 
-export default async function purge() {
+export default async function purgeHorses() {
     // Obtain all the horse IDs and gamelog IDs, delete them all,
     // and update the users to remove any bet containing any gamelog
     // before this purge
