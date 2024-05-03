@@ -4,6 +4,7 @@ import {
   SERVER_TICK_RATE_MS,
 } from '../config/globalsettings.js';
 import {
+  BOOST_DURATION_MS,
   DECELERATION,
   InternalHorse,
   MODE_DURATION,
@@ -189,6 +190,23 @@ export class RaceState {
         });
       }
 
+      // If the horse is between 20% and 80% done, add a random probability
+      // for the horse to obtain a carrot.
+      const boostFactor = currentPlacement + 1;
+      if (
+        positionPercent > 0.2 &&
+        positionPercent < 0.8 &&
+        Math.random() < boostFactor * race.boostProbability
+      ) {
+        queuedStatusEffects.push({
+          horseIdx: horseIdx,
+          status: {
+            name: 'boost',
+            duration: BOOST_DURATION_MS,
+          },
+        });
+      }
+
       return nextHs;
     });
 
@@ -208,6 +226,15 @@ export class RaceState {
     // Apply all queued status effects to the horses
     for (const { horseIdx, status } of queuedStatusEffects) {
       next.horseStates[horseIdx].statusEffects.push(status);
+
+      if (status.name === 'boost') {
+        const maxStamina = race.horses[horseIdx].stamina;
+        const currStamina = next.horseStates[horseIdx].currentStamina;
+        next.horseStates[horseIdx].currentStamina = Math.min(
+          currStamina,
+          currStamina + Math.floor(maxStamina * 0.5),
+        );
+      }
 
       next.horseStatusCommentary(horseIdx, status);
     }

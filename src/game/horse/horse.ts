@@ -17,6 +17,9 @@ export const TRIP_HIGH_SPEED = 1200;
 export const TRIP_PROBABILITY = SERVER_TICK_RATE_MS / (1000 * 10);
 export const TRIP_DURATION_MS = 1000;
 
+export const BOOST_PROBABILITY = SERVER_TICK_RATE_MS / (1000 * 20);
+export const BOOST_DURATION_MS = 2000;
+
 function interpolate(specStatValue: number, bounds: Array<number>): number {
   const normalized = (specStatValue - 3) / 17;
   return bounds[0] + Math.floor(normalized * (bounds[1] - bounds[0]));
