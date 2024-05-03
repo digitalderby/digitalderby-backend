@@ -417,7 +417,9 @@ export class GameServer {
 
     this.emitClientStatus(clientInfo);
     this.broadcastClientCount();
+    this.broadcastNewPool();
     this.sendRaceInfo(clientInfo);
+    this.broadcastStateV2({ client: clientInfo });
   }
 
   emitClientStatus(client: ClientInfo) {
@@ -461,6 +463,7 @@ export class GameServer {
 
     this.sendRaceInfo();
     this.broadcastStateV2();
+    this.broadcastNewPool();
   }
 
   startRaceMode() {
@@ -583,7 +586,13 @@ export class GameServer {
     }
   }
 
-  broadcastStateV2(lag?: bigint): void {
+  broadcastStateV2({
+    lag,
+    client,
+  }: {
+    lag?: bigint;
+    client?: ClientInfo;
+  } = {}): void {
     if (this.io === null) {
       return;
     }
@@ -652,7 +661,11 @@ export class GameServer {
       }
     }
 
-    this.io.of('/user').emit('gameStatev2', payload);
+    if (client === undefined) {
+      this.io.of('/user').emit('gameStatev2', payload);
+    } else {
+      client.socket.emit('gameStatev2', payload);
+    }
   }
 
   emitStateV1(lag: bigint): void {

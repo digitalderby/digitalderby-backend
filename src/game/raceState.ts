@@ -192,6 +192,14 @@ export class RaceState {
       return nextHs;
     });
 
+    next.rankings = Array.from(
+      { length: this.horseStates.length },
+      (_, i) => i,
+    );
+    next.recomputeRankings();
+
+    next.positionChangeCommentary(this);
+
     // Apply all finish commentaries
     for (const horseIdx of newFinishes) {
       next.finishCommentary(horseIdx);
@@ -203,14 +211,6 @@ export class RaceState {
 
       next.horseStatusCommentary(horseIdx, status);
     }
-
-    next.rankings = Array.from(
-      { length: this.horseStates.length },
-      (_, i) => i,
-    );
-    next.recomputeRankings();
-
-    next.positionChangeCommentary(this);
 
     return next;
   }
@@ -251,7 +251,7 @@ export class RaceState {
       const prevPlacement = previous.placement(i);
       const currPlacement = this.placement(i);
 
-      if (prevPlacement < currPlacement && currPlacement !== 0) {
+      if (prevPlacement > currPlacement && currPlacement !== 0) {
         const horse = this.horseStates[i].horse;
         this.newMessages.push(
           `${horse.spec.name} ascends to ${placementName(currPlacement)} place!`,
@@ -277,7 +277,7 @@ export class RaceState {
   }
 
   finishCommentary(horseIdx: number) {
-    const placement = this.placement(horseIdx);
+    const placement = placementName(this.placement(horseIdx));
     const horse = this.horseStates[horseIdx].horse;
     this.newMessages.push(`${horse.spec.name} finished in ${placement} place!`);
   }
