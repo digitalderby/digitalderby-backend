@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { sendJSONError } from '../errorHandler.js';
 import { User } from '../models/User.js';
+import { Horse } from '../models/Horse.js';
+import mongoose, { Types } from 'mongoose';
 
 export async function getAllUsers(
   req: Request,
@@ -24,38 +26,16 @@ export async function getUserByUsername(
     const user = await User.findOne(
       { username: req.params.uname },
       '-passwordHash',
-    );
+    )
+      .populate('profile.betLog.gameId')
+      .populate('profile.betLog.horseId')
+      .populate('profile.favoriteHorses');
     if (!user) {
       return sendJSONError(res, 404, `User ${req.params.uname} not found`);
     }
     res.status(200).json(user);
   } catch (error) {
     sendJSONError(res, 500, `Internal error retrieving user: ${error}`);
-  }
-}
-// EVERYTHING ABOVE THIS LINE IS THE SAME AS BEFORE
-
-// Function to create a new user
-export async function createUser(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> {
-  try {
-    // Extract user data from request body
-    const userData = req.body;
-
-    // Create a new user instance
-    const newUser = new User(userData);
-
-    // Save the user to the database
-    await newUser.save();
-
-    // Return the newly created user in the response
-    res.status(201).json(newUser);
-  } catch (error) {
-    // Handle errors
-    sendJSONError(res, 500, `Internal error creating user: ${error}`);
   }
 }
 
@@ -121,5 +101,88 @@ export async function deleteUser(
   } catch (error) {
     // Handle errors
     sendJSONError(res, 500, `Internal error deleting user: ${error}`);
+  }
+}
+
+export async function getUserFavoriteHorses(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const horses = await User.findOne({ username: req.params.uname })
+      .populate('profile.favoriteHorses')
+      .select('profile.favoriteHorses')
+      .lean();
+    if (!horses) {
+      return sendJSONError(res, 404, 'Could not find user');
+    }
+    res.status(200).json(horses?.profile?.favoriteHorses);
+  } catch (error) {
+    sendJSONError(res, 500, `Internal error retrieving horses: ${error}`);
+  }
+}
+
+export async function addUserFavoriteHorses(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (req.params.uname !== req.body.jwtPayload.username) {
+    return sendJSONError(
+      res,
+      401,
+      `Cannot modify other user's favorite horses`,
+    );
+  }
+
+  try {
+    await User.updateOne(
+      { username: req.params.uname },
+      {
+        $addToSet: {
+          'profile.favoriteHorses': req.body.horseId,
+        },
+      },
+    );
+
+    res.status(200).json({ message: 'Successfully added horse to favorites' });
+  } catch (error) {
+    sendJSONError(res, 500, `Internal error when updating horses: ${error}`);
+  }
+}
+
+export async function removeUserFavoriteHorse(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  if (req.params.uname !== req.body.jwtPayload.username) {
+    return sendJSONError(
+      res,
+      401,
+      `Cannot modify other user's favorite horses`,
+    );
+  }
+
+  if (!req.params.horseId) {
+    return sendJSONError(res, 400, `Must supply horse ID`);
+  }
+
+  try {
+    await User.updateOne(
+      { username: req.params.uname },
+      {
+        $pull: {
+          'profile.favoriteHorses': req.params.horseId,
+        },
+      },
+    );
+
+    res
+      .status(200)
+      .json({ message: 'Successfully removed horse from favorites' });
+  } catch (error) {
+    sendJSONError(res, 500, `Internal error when updating horses: ${error}`);
   }
 }

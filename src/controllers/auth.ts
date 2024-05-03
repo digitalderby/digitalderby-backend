@@ -3,7 +3,6 @@ import { NextFunction, Request, Response } from 'express';
 import { User } from '../models/User.js';
 import { saltPassword, verifyPassword } from '../auth/password.js';
 import { jwtSecret } from '../auth/secrets.js';
-import { markDeletedUser } from '../auth/tokens.js';
 import { sendJSONError } from '../errorHandler.js';
 import { DEFAULT_WALLET } from '../config/globalsettings.js';
 
@@ -31,6 +30,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
         bets: [],
         wallet: DEFAULT_WALLET,
         bankruptcies: 0,
+        favoriteHorses: [],
       },
     });
 
@@ -104,8 +104,6 @@ export async function deleteLoggedInUser(
 
     // Now delete
     await User.deleteOne({ user: req.body.jwtPayload.username });
-
-    markDeletedUser(req.body.jwtPayload.username);
 
     res.status(200).json({ message: 'Successfully deleted account' });
   } catch (error) {

@@ -10,6 +10,7 @@ interface IProfile {
   betLog: IBet[];
   wallet: number;
   bankruptcies: number;
+  favoriteHorses: mongoose.Types.ObjectId[];
 }
 
 interface IBet {
@@ -59,6 +60,12 @@ const profileSchema = new mongoose.Schema<IProfile>({
     type: Number,
     required: true,
   },
+  favoriteHorses: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Horse',
+    },
+  ],
 });
 
 const userSchema = new mongoose.Schema<IUser>({

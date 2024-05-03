@@ -31,13 +31,19 @@ console.log(`Results delay: ${RESULTS_DELAY}`);
 export interface raceDetailsSchema {
   horses: {
     // Name of the horse.
-    horseName: string;
+    name: string;
     // ID of the horse.
-    horseId: string;
+    id: string;
     // Color of the horse.
-    horseColor: string;
+    color: string;
     // Icons of the horse.
-    horseIcons: string[];
+    icons: string[];
+    // Stats of the horse.
+    stats: {
+      topSpeed: number;
+      acceleration: number;
+      stamina: number;
+    };
   }[];
   // Length of the race in units.
   raceLength: number;
@@ -45,17 +51,14 @@ export interface raceDetailsSchema {
   weatherConditions: string;
 }
 
-export interface generalStateSchema {
-  // Number of connected clients.
-  numClients: number;
-  lag: number;
-
-  // Currently queued race- information on each specific horse.
+export interface raceInfoSchema {
   race: raceDetailsSchema;
-  // Current value of the betting pool.
-  currentPoolValue: number;
-  // Minimum bet value
   minimumBet: number;
+}
+
+export interface generalStateSchema {
+  lag: number;
+  status: 'betting' | 'race' | 'results';
 }
 
 export interface betStateSchema extends generalStateSchema {
@@ -83,6 +86,8 @@ export interface raceStateSchema extends generalStateSchema {
       position: number;
       // Current speed of the horse.
       speed: number;
+      // Current status effects on the horse
+      status: string[];
       // Whether or not the horse has finished the race.
       isFinished: boolean;
       // Time that the horse has finished the race.
@@ -92,6 +97,9 @@ export interface raceStateSchema extends generalStateSchema {
     // the 1st index is the index of the horse in 2nd place, etc.
     rankings: number[];
   };
+
+  raceFinished: boolean;
+  postraceEndTime?: Date;
 }
 
 export interface resultsSchema extends generalStateSchema {
@@ -131,7 +139,7 @@ export class GameServer {
   pool: number[] = [];
   totalPool: number = 0;
 
-  messages: Array<string> = [];
+  commentary: string[] = [];
 
   lag: bigint = 0n;
   prevTime: bigint = hrTimeMs();
@@ -159,7 +167,7 @@ export class GameServer {
   _loopCancelFunction: (() => void) | null = null;
 
   /** Array of all race states */
-  raceStates: Array<RaceState> | null = null;
+  raceState: RaceState | null = null;
 
   // TODO: add jsdocs
   createServer(server: HTTPServer) {
@@ -174,7 +182,7 @@ export class GameServer {
     });
 
     this.clients = new Map();
-    this.messages = [];
+    this.commentary;
 
     // For each client that connects to the server, set up the corresponding
     // event listeners.
@@ -307,6 +315,7 @@ export class GameServer {
     // Client closed the connection.
     socket.on('disconnect', () => {
       this.clients.delete(socket.data.username);
+      this.broadcastClientCount();
     });
 
     // Client places a bet on a given horse
@@ -371,7 +380,7 @@ export class GameServer {
 
       this.recomputePool();
       this.emitClientStatus(clientInfo);
-      this.broadcastStateV2();
+      this.broadcastNewPool();
 
       callback({
         message: 'ok',
@@ -402,7 +411,7 @@ export class GameServer {
 
       this.recomputePool();
       this.emitClientStatus(clientInfo);
-      this.broadcastStateV2();
+      this.broadcastNewPool();
 
       res({
         message: 'ok',
@@ -413,7 +422,10 @@ export class GameServer {
     socket.emit('username', socket.data.username);
 
     this.emitClientStatus(clientInfo);
-    this.broadcastStateV2();
+    this.broadcastClientCount();
+    this.broadcastNewPool();
+    this.sendRaceInfo(clientInfo);
+    this.broadcastStateV2({ client: clientInfo });
   }
 
   emitClientStatus(client: ClientInfo) {
@@ -443,17 +455,21 @@ export class GameServer {
     console.log(this.race?.weatherConditions);
     this.bettingTimer = BETTING_DELAY * 1000;
     this.bettingEndTimestamp = new Date(Date.now() + BETTING_DELAY * 1000);
-    this.raceStates = null;
+    this.raceState = null;
 
     this.bets = new Map();
     this.pool = Array(HORSES_PER_RACE).fill(0);
     this.totalPool = 0;
 
+    this.commentary = [];
+
     for (const client of this.clients.values()) {
       this.emitClientStatus(client);
     }
 
+    this.sendRaceInfo();
     this.broadcastStateV2();
+    this.broadcastNewPool();
   }
 
   startRaceMode() {
@@ -469,11 +485,11 @@ export class GameServer {
     console.log(`Current pool: ${this.pool}`);
     console.log(`Total: ${this.totalPool}`);
 
-    this.raceStates = [new RaceState(this.race)];
+    this.raceState = new RaceState(this.race);
 
     // If cheat mode is enabled, always put horses at the end
     if (CHEAT_MODE) {
-      this.raceStates[0].horseStates[0].position = RACE_LENGTH - 1;
+      this.raceState.horseStates[0].position = RACE_LENGTH - 1;
     }
 
     this.broadcastStateV2();
@@ -485,19 +501,18 @@ export class GameServer {
     this.resultsTimer = RESULTS_DELAY * 1000;
     this.resultsEndTimestamp = new Date(Date.now() + RESULTS_DELAY * 1000);
 
-    if (this.raceStates === null) {
+    if (this.raceState === null) {
       throw new Error('Could not enter results mode');
     }
 
     // Get the end state of the race
-    const lastState = this.raceStates[this.raceStates.length - 1];
     for (const bet of this.bets.values()) {
       const client = this.clients.get(bet.username);
       if (client === undefined) {
         continue;
       }
       // For each player who bet on the winning horse, pay them the total pool times the fraction they put on a given horse
-      if (bet.horseIdx === lastState.rankings[0]) {
+      if (bet.horseIdx === this.raceState.rankings[0]) {
         bet.returns =
           this.totalPool * Math.floor(bet.betValue / this.pool[bet.horseIdx]);
       }
@@ -543,12 +558,11 @@ export class GameServer {
 
         // Otherwise, compute the next state and add it to the
         // list of race states in memory
-        if (this.raceStates === null) {
+        if (this.raceState === null) {
           throw new Error('no race states');
         }
-        const currentState = this.raceStates[this.raceStates.length - 1];
 
-        if (currentState.raceOver()) {
+        if (this.raceState.raceOver()) {
           this.startResultsMode();
           return;
         }
@@ -556,8 +570,14 @@ export class GameServer {
           throw new Error('no race');
         }
 
-        const nextState = currentState.nextState(this.race);
-        this.raceStates.push(nextState);
+        const nextState = this.raceState.nextState(this.race);
+
+        // Add new commentary
+        for (const comment of nextState.newMessages) {
+          this.commentary.push(comment);
+        }
+
+        this.raceState = nextState;
         break;
       }
       case 'results': {
@@ -566,14 +586,19 @@ export class GameServer {
           return;
         }
 
-        // start a new race if we're autorestarting
         this.startBettingMode();
         break;
       }
     }
   }
 
-  broadcastStateV2(lag?: bigint): void {
+  broadcastStateV2({
+    lag,
+    client,
+  }: {
+    lag?: bigint;
+    client?: ClientInfo;
+  } = {}): void {
     if (this.io === null) {
       return;
     }
@@ -590,20 +615,8 @@ export class GameServer {
 
     let payload: resultsSchema | raceStateSchema | betStateSchema;
     const general: generalStateSchema = {
-      numClients: this.clients.size,
       lag: Number(currLag),
-      race: {
-        horses: this.race.horses.map((h) => ({
-          horseName: h.spec.name,
-          horseId: h.spec._id.toString(),
-          horseColor: h.spec.color,
-          horseIcons: h.spec.icons,
-        })),
-        raceLength: this.race.length,
-        weatherConditions: this.race.weatherConditions?.name || 'Clear',
-      },
-      currentPoolValue: this.totalPool,
-      minimumBet: MINIMUM_BET,
+      status: 'betting',
     };
 
     switch (this.raceStatus) {
@@ -616,45 +629,49 @@ export class GameServer {
         break;
       }
       case 'race': {
-        if (this.raceStates === null) {
+        if (this.raceState === null) {
           return;
         }
-        const lastState = this.raceStates[this.raceStates.length - 1];
         payload = {
           ...general,
           status: 'race',
           preraceStartTime:
             this.preRaceTimer > 0 ? undefined : this.preraceEndTimestamp,
-          eventMessages: this.messages,
+          eventMessages: this.commentary,
           raceState: {
-            horseStates: lastState.horseStates.map((hs) => ({
+            horseStates: this.raceState.horseStates.map((hs) => ({
               position: hs.position,
               speed: hs.currentSpeed,
+              status: hs.statusEffects.map((ss) => ss.name),
               isFinished: hs.finishTime !== null,
               finishTime: hs.finishTime !== null ? hs.finishTime : undefined,
             })),
-            rankings: lastState.rankings,
+            rankings: this.raceState.rankings,
           },
+          raceFinished: this.raceState.raceOver(),
         };
         break;
       }
       case 'results': {
-        if (this.raceStates === null) {
+        if (this.raceState === null) {
           return;
         }
-        const lastState = this.raceStates[this.raceStates.length - 1];
         payload = {
           ...general,
           status: 'results',
           nextRaceStartTime: this.resultsEndTimestamp,
-          rankings: lastState.rankings,
-          finishTimes: lastState.horseStates.map((hs) => hs.finishTime),
+          rankings: this.raceState.rankings,
+          finishTimes: this.raceState.horseStates.map((hs) => hs.finishTime),
         };
         break;
       }
     }
 
-    this.io.of('/user').emit('gamestatev2', payload);
+    if (client === undefined) {
+      this.io.of('/user').emit('gameStatev2', payload);
+    } else {
+      client.socket.emit('gameStatev2', payload);
+    }
   }
 
   emitStateV1(lag: bigint): void {
@@ -667,7 +684,7 @@ export class GameServer {
         this.io.of('/user').emit('gamestate', {
           status: this.raceStatus,
           clients: [...this.clients.keys()],
-          messages: this.messages,
+          messages: this.commentary,
           lag: Number(lag),
 
           race: this.race,
@@ -678,28 +695,22 @@ export class GameServer {
         this.io.of('/user').emit('gamestate', {
           status: this.raceStatus,
           clients: [...this.clients.keys()],
-          messages: this.messages,
+          messages: this.commentary,
           lag: Number(lag),
 
           preRaceTimer: this.preRaceTimer,
-          raceStates:
-            this.raceStates === null
-              ? null
-              : this.raceStates[this.raceStates.length - 1],
+          raceStates: this.raceState,
         });
         break;
       case 'results':
         this.io.of('/user').emit('gamestate', {
           status: this.raceStatus,
           clients: [...this.clients.keys()],
-          messages: this.messages,
+          messages: this.commentary,
           lag: Number(lag),
 
           resultsTimer: this.resultsTimer,
-          raceStates:
-            this.raceStates === null
-              ? null
-              : this.raceStates[this.raceStates.length - 1],
+          raceStates: this.raceState,
         });
         break;
     }
@@ -726,16 +737,15 @@ export class GameServer {
 
   async commitGame(): Promise<void> {
     console.log('Writing game results to database...');
-    if (this.race === null || this.raceStates === null) {
+    if (this.race === null || this.raceState === null) {
       return;
     }
-    const lastRaceState = this.raceStates[this.raceStates.length - 1];
 
     // Create a game log object in the database
     const game = await GameLog.create({
       horses: this.race.horses.map((h) => h.spec._id),
       results: {
-        rankings: lastRaceState.rankings,
+        rankings: this.raceState.rankings,
       },
     });
     console.log('Successfully wrote game log to database ');
@@ -760,6 +770,50 @@ export class GameServer {
     );
 
     this.notifyClientsOfBetResults();
+  }
+
+  getRaceInfo(): raceInfoSchema | null {
+    if (this.race === null) {
+      return null;
+    }
+
+    const payload: raceInfoSchema = {
+      race: {
+        horses: this.race.horses.map((h) => ({
+          name: h.spec.name,
+          id: h.spec._id.toString(),
+          color: h.spec.color,
+          icons: h.spec.icons,
+          stats: {
+            topSpeed: h.spec.stats.topSpeed,
+            acceleration: h.spec.stats.acceleration,
+            stamina: h.spec.stats.stamina,
+          },
+        })),
+        raceLength: this.race.length,
+        weatherConditions: this.race.weatherConditions?.name || 'Clear',
+      },
+
+      minimumBet: MINIMUM_BET,
+    };
+
+    return payload;
+  }
+
+  sendRaceInfo(client?: ClientInfo) {
+    if (client === undefined) {
+      this.io?.of('/user').emit('raceInfo', this.getRaceInfo());
+    } else {
+      client.socket.emit('raceInfo', this.getRaceInfo());
+    }
+  }
+
+  broadcastClientCount() {
+    this.io?.of('/user').emit('connectedClients', this.clients.size);
+  }
+
+  broadcastNewPool() {
+    this.io?.of('/user').emit('poolValue', this.totalPool);
   }
 
   // Start the main server loop.
@@ -799,7 +853,7 @@ export class GameServer {
 
       // Only broadcast v2 states if we are in race mode
       if (dirty && this.raceStatus === 'race') {
-        this.broadcastStateV2(this.lag);
+        this.broadcastStateV2({ lag: this.lag });
       }
     };
 
