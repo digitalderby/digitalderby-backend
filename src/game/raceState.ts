@@ -1,4 +1,8 @@
-import { RACE_LENGTH, SERVER_TICK_RATE_MS } from '../config/globalsettings.js';
+import {
+  HORSES_PER_RACE,
+  RACE_LENGTH,
+  SERVER_TICK_RATE_MS,
+} from '../config/globalsettings.js';
 import {
   DECELERATION,
   InternalHorse,
@@ -10,69 +14,21 @@ import {
   TRIP_PROBABILITY,
 } from './horse/horse.js';
 import { Race } from './race.js';
+import { rollForModeBuff } from './speedMode.js';
 
 const dt = SERVER_TICK_RATE_MS / 1000;
-
-const lowPlacementFactors = [1, 0.75, 0.5, 0.25];
-
-const highPlacementFactors = [0.25, 0.5, 0.75, 1];
-
-type SpeedFactor = {
-  staminaPercent: number;
-  placement: number;
-  positionPercent: number;
-};
 
 export type StatusEffect = {
   name: string;
   duration: number;
 };
 
-function lowSpeedProb(factor: SpeedFactor): number {
-  const staminaFactor =
-    factor.staminaPercent < 0.2
-      ? 0.5 + ((0.2 - factor.staminaPercent) / 0.2) * 0.5
-      : 0;
-  const placementFactor = lowPlacementFactors[factor.placement];
-  const timeFactor = SERVER_TICK_RATE_MS / (1000 * 4);
-  return staminaFactor * placementFactor * timeFactor;
-}
-
-function highSpeedProb(factor: SpeedFactor): number {
-  const staminaFactor =
-    factor.staminaPercent > 0.5
-      ? 0.5 + ((factor.staminaPercent - 0.5) / 0.5) * 0.5
-      : 0.25;
-  const placementFactor = highPlacementFactors[factor.placement];
-  const timeFactor = SERVER_TICK_RATE_MS / (1000 * 4);
-  return staminaFactor * placementFactor * timeFactor;
-}
-
-function rollForModeBuff(factor: SpeedFactor): {
-  mode: 'low' | 'high';
-  duration: number;
-} | null {
-  const lowProb = lowSpeedProb(factor);
-  const highProb = highSpeedProb(factor);
-  if (Math.random() < lowProb) {
-    return {
-      mode: 'low',
-      duration: MODE_DURATION,
-    };
-  } else if (Math.random() < highProb) {
-    return {
-      mode: 'high',
-      duration: MODE_DURATION * (0.5 + Math.random() * 1.5),
-    };
-  }
-  return null;
-}
-
 export class RaceState {
   horseStates: Array<HorseState> = [];
   rankings: Array<number> = [];
   time: number = 0;
   length: number = RACE_LENGTH;
+  newMessages: string[] = [];
 
   constructor(race?: Race) {
     if (race) {
@@ -223,6 +179,8 @@ export class RaceState {
     // Apply all queued status effects to the horses
     for (const { horseIdx, status } of queuedStatusEffects) {
       next.horseStates[horseIdx].statusEffects.push(status);
+
+      next.horseStatusCommentary(horseIdx, status);
     }
 
     next.rankings = Array.from(
@@ -230,6 +188,8 @@ export class RaceState {
       (_, i) => i,
     );
     next.recomputeRankings();
+
+    next.positionChangeCommentary(this);
 
     return next;
   }
@@ -256,6 +216,60 @@ export class RaceState {
         }
       }
     });
+  }
+
+  positionChangeCommentary(previous: RaceState) {
+    // New horse took the lead
+    if (previous.rankings[0] !== this.rankings[0]) {
+      const horse = this.horseStates[this.rankings[0]].horse;
+      this.newMessages.push(`${horse.spec.name} took the lead!`);
+    }
+
+    // Horse ascends to new position that isn't first place
+    for (let i = 0; i < HORSES_PER_RACE; i++) {
+      const prevPlacement = previous.placement(i);
+      const currPlacement = this.placement(i);
+
+      if (prevPlacement < currPlacement && currPlacement !== 0) {
+        let positionName: string;
+        const place = currPlacement + 1;
+        switch (place % 10) {
+          case 1:
+            positionName = `${place}st`;
+            break;
+          case 2:
+            positionName = `${place}nd`;
+            break;
+          case 3:
+            positionName = `${place}rd`;
+            break;
+          default:
+            positionName = `${place}th`;
+            break;
+        }
+
+        const horse = this.horseStates[i].horse;
+        this.newMessages.push(
+          `${horse.spec.name} ascends to ${positionName} place!`,
+        );
+      }
+    }
+  }
+
+  horseStatusCommentary(horseIdx: number, status: StatusEffect) {
+    const horse = this.horseStates[horseIdx].horse;
+    switch (status.name) {
+      case 'trip':
+        {
+          this.newMessages.push(`${horse.spec.name} tripped!`);
+        }
+        break;
+      case 'boost':
+        {
+          this.newMessages.push(`${horse.spec.name} ate a carrot!`);
+        }
+        break;
+    }
   }
 
   placement(horseIdx: number): number {
