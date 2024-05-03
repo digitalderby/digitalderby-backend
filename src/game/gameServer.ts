@@ -45,17 +45,14 @@ export interface raceDetailsSchema {
   weatherConditions: string;
 }
 
-export interface generalStateSchema {
-  // Number of connected clients.
-  numClients: number;
-  lag: number;
-
-  // Currently queued race- information on each specific horse.
+export interface raceInfoSchema {
   race: raceDetailsSchema;
-  // Current value of the betting pool.
-  currentPoolValue: number;
-  // Minimum bet value
   minimumBet: number;
+}
+
+export interface generalStateSchema {
+  lag: number;
+  status: 'betting' | 'race' | 'results';
 }
 
 export interface betStateSchema extends generalStateSchema {
@@ -83,6 +80,8 @@ export interface raceStateSchema extends generalStateSchema {
       position: number;
       // Current speed of the horse.
       speed: number;
+      // Current status effects on the horse
+      status: string[];
       // Whether or not the horse has finished the race.
       isFinished: boolean;
       // Time that the horse has finished the race.
@@ -92,6 +91,9 @@ export interface raceStateSchema extends generalStateSchema {
     // the 1st index is the index of the horse in 2nd place, etc.
     rankings: number[];
   };
+
+  raceFinished: boolean;
+  postraceEndTime?: Date;
 }
 
 export interface resultsSchema extends generalStateSchema {
@@ -307,6 +309,7 @@ export class GameServer {
     // Client closed the connection.
     socket.on('disconnect', () => {
       this.clients.delete(socket.data.username);
+      this.broadcastClientCount();
     });
 
     // Client places a bet on a given horse
@@ -371,7 +374,7 @@ export class GameServer {
 
       this.recomputePool();
       this.emitClientStatus(clientInfo);
-      this.broadcastStateV2();
+      this.broadcastNewPool();
 
       callback({
         message: 'ok',
@@ -402,7 +405,7 @@ export class GameServer {
 
       this.recomputePool();
       this.emitClientStatus(clientInfo);
-      this.broadcastStateV2();
+      this.broadcastNewPool();
 
       res({
         message: 'ok',
@@ -413,7 +416,8 @@ export class GameServer {
     socket.emit('username', socket.data.username);
 
     this.emitClientStatus(clientInfo);
-    this.broadcastStateV2();
+    this.broadcastClientCount();
+    this.sendRaceInfo(clientInfo);
   }
 
   emitClientStatus(client: ClientInfo) {
@@ -449,10 +453,13 @@ export class GameServer {
     this.pool = Array(HORSES_PER_RACE).fill(0);
     this.totalPool = 0;
 
+    this.commentary = [];
+
     for (const client of this.clients.values()) {
       this.emitClientStatus(client);
     }
 
+    this.sendRaceInfo();
     this.broadcastStateV2();
   }
 
@@ -593,20 +600,8 @@ export class GameServer {
 
     let payload: resultsSchema | raceStateSchema | betStateSchema;
     const general: generalStateSchema = {
-      numClients: this.clients.size,
       lag: Number(currLag),
-      race: {
-        horses: this.race.horses.map((h) => ({
-          horseName: h.spec.name,
-          horseId: h.spec._id.toString(),
-          horseColor: h.spec.color,
-          horseIcons: h.spec.icons,
-        })),
-        raceLength: this.race.length,
-        weatherConditions: this.race.weatherConditions?.name || 'Clear',
-      },
-      currentPoolValue: this.totalPool,
-      minimumBet: MINIMUM_BET,
+      status: 'betting',
     };
 
     switch (this.raceStatus) {
@@ -632,11 +627,13 @@ export class GameServer {
             horseStates: this.raceState.horseStates.map((hs) => ({
               position: hs.position,
               speed: hs.currentSpeed,
+              status: hs.statusEffects.map((ss) => ss.name),
               isFinished: hs.finishTime !== null,
               finishTime: hs.finishTime !== null ? hs.finishTime : undefined,
             })),
             rankings: this.raceState.rankings,
           },
+          raceFinished: this.raceState.raceOver(),
         };
         break;
       }
@@ -655,7 +652,7 @@ export class GameServer {
       }
     }
 
-    this.io.of('/user').emit('gamestatev2', payload);
+    this.io.of('/user').emit('gameStatev2', payload);
   }
 
   emitStateV1(lag: bigint): void {
@@ -754,6 +751,45 @@ export class GameServer {
     );
 
     this.notifyClientsOfBetResults();
+  }
+
+  getRaceInfo(): raceInfoSchema | null {
+    if (this.race === null) {
+      return null;
+    }
+
+    const payload: raceInfoSchema = {
+      race: {
+        horses: this.race.horses.map((h) => ({
+          horseName: h.spec.name,
+          horseId: h.spec._id.toString(),
+          horseColor: h.spec.color,
+          horseIcons: h.spec.icons,
+        })),
+        raceLength: this.race.length,
+        weatherConditions: this.race.weatherConditions?.name || 'Clear',
+      },
+
+      minimumBet: MINIMUM_BET,
+    };
+
+    return payload;
+  }
+
+  sendRaceInfo(client?: ClientInfo) {
+    if (client === undefined) {
+      this.io?.of('/user').emit('raceInfo', this.getRaceInfo());
+    } else {
+      client.socket.emit('raceInfo', this.getRaceInfo());
+    }
+  }
+
+  broadcastClientCount() {
+    this.io?.of('/user').emit('connectedClients', this.clients.size);
+  }
+
+  broadcastNewPool() {
+    this.io?.of('/user').emit('poolValue', this.totalPool);
   }
 
   // Start the main server loop.
