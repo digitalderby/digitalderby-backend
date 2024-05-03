@@ -1,3 +1,5 @@
+import GlobalSettings, { IGlobalSettings } from "../models/GlobalSettings.js"
+
 export const SERVER_TICK_RATE_MS = Number(process.env.SERVER_TICK_RATE_MS) || 100
 
 export const HORSE_POPULATION = Number(process.env.HORSE_POPULATION) || 100
@@ -12,3 +14,16 @@ export const RESULTS_DELAY = Number(process.env.RESULTS_DELAY) || 10
 export const CHEAT_MODE = process.env.CHEAT_MODE === 'enabled'
 export const RACE_LENGTH = Number(process.env.RACE_LENGTH) || 10000
 export const AUTOSTART = process.env.AUTOSTART === 'enabled'
+
+let globalSettings: IGlobalSettings
+try {
+    let settings = await GlobalSettings.findOne().lean()
+    if (!settings) {
+        console.log('Creating defaults')
+        settings = await GlobalSettings.create({})
+    }
+
+    globalSettings = settings
+} catch (error) {
+    console.log('Error while retrieving global settings from database')
+}
