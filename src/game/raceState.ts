@@ -87,6 +87,7 @@ export class RaceState {
       }
 
       const trip = hs.hasStatus('trip');
+      const boost = hs.hasStatus('boost');
 
       // Calculate modifiers based on current stats.
 
@@ -100,6 +101,11 @@ export class RaceState {
       // If the horse tripped, set target speed to 0.
       if (trip) {
         targetSpeed = 0;
+      }
+
+      // If the horse is boosting, increase target speed by 1.5
+      if (boost) {
+        targetSpeed *= 1.5;
       }
 
       // Move position by currentSpeed
@@ -194,6 +200,7 @@ export class RaceState {
       // for the horse to obtain a carrot.
       const boostFactor = currentPlacement + 1;
       if (
+        !boost &&
         positionPercent > 0.2 &&
         positionPercent < 0.8 &&
         Math.random() < boostFactor * race.boostProbability
