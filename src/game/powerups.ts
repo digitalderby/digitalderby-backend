@@ -2,28 +2,24 @@
 import { InternalHorse } from './horse/horse.js';
 import { Race } from './race.js';
 
-export interface Powerup {
-  name: string;
-  apply(horse: InternalHorse, race: Race): void;
-}
+// Define a type for the powerup functions
+export type Powerup = (horse: InternalHorse, race: Race) => void;
 
-export class SpeedBoost implements Powerup {
-  name = 'Speed Boost';
-  apply(horse: InternalHorse, race: Race) {
-    horse.speed += 5;  // Temporarily increase horse speed
-  }
-}
+// Speed Boost Powerup
+export const applySpeedBoost: Powerup = (horse, race, boostAmount = 5) => {
+  horse.highSpeed += boostAmount; // Increase high speed by a fixed amount
+  horse.midSpeed += boostAmount * 0.75; // Mid speed increases by a slightly lesser factor
+  horse.lowSpeed += boostAmount * 0.5; // Low speed increases by half the factor of high speed
+};
 
-export class StaminaBoost implements Powerup {
-  name = 'Stamina Boost';
-  apply(horse: InternalHorse, race: Race) {
-    horse.stamina += 10;  // Temporarily increase horse stamina
-  }
-}
+// Stamina Boost Powerup
+export const applyStaminaBoost: Powerup = (horse, race, boostAmount = 10) => {
+  horse.stamina += boostAmount; // Directly increase stamina
+};
 
-export class TripResistant implements Powerup {
-  name = 'Trip Resistant';
-  apply(horse: InternalHorse, race: Race) {
-    horse.tripProbability *= 0.5;  // Reduce the chance of tripping
+// Trip Resistant Powerup
+export const applyTripResistant: Powerup = (horse, race, resistanceFactor = 0.5) => {
+  if ('tripProbability' in horse) { // Check if tripProbability exists in horse
+    horse.tripProbability *= resistanceFactor; // Reduce the chance of tripping by a factor
   }
-}
+};
