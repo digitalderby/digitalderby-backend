@@ -18,3 +18,4 @@ export const applyStaminaBoost: Powerup = (horse, race, boostAmount = 10) => { /
 };
 
 // Functions are not importted in any file
+// 
