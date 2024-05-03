@@ -6,7 +6,7 @@
  * @returns {number}
  */
 export function randRange(lo: number, hi: number): number {
-    return Math.floor(lo + Math.random() * (hi - lo + 1))
+  return Math.floor(lo + Math.random() * (hi - lo + 1));
 }
 
 /**
@@ -16,7 +16,9 @@ export function randRange(lo: number, hi: number): number {
  * @param {Array} bounds
  * @returns {number}
  */
-export function randFromBounds(bounds: Array<number>): number { return randRange(bounds[0], bounds[1]) }
+export function randFromBounds(bounds: Array<number>): number {
+  return randRange(bounds[0], bounds[1]);
+}
 
 /**
  * Shuffles the given array in-place using the Fisher-Yates algorithm.
@@ -24,13 +26,13 @@ export function randFromBounds(bounds: Array<number>): number { return randRange
  * @param {Array} arr
  */
 export function shuffle(arr: Array<any>) {
-    // Fisher-Yates shuffle
-    for (let i = 0; i < arr.length-1; i++) {
-        const j = Math.floor(i + Math.random() * (arr.length-i))
-        const tmp = arr[i]
-        arr[i] = arr[j]
-        arr[j] = tmp
-    }
+  // Fisher-Yates shuffle
+  for (let i = 0; i < arr.length - 1; i++) {
+    const j = Math.floor(i + Math.random() * (arr.length - i));
+    const tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+  }
 }
 
 /**
@@ -41,16 +43,21 @@ export function shuffle(arr: Array<any>) {
  * @param {number} k
  * @returns {Array<number> | null}
  */
-export function randomIndicesNoReplacement(n: number, k: number): Array<number> | null {
-    if (n < k) { return null }
-    let arr = Array.from({length: n}, (_, i) => i)
-    for (let i = 0; i < Math.min(k, n-1); i++) {
-        const j = Math.floor(i + Math.random() * (arr.length-i))
-        const tmp = arr[i]
-        arr[i] = arr[j]
-        arr[j] = tmp
-    }
-    return arr.slice(0, k)
+export function randomIndicesNoReplacement(
+  n: number,
+  k: number,
+): Array<number> | null {
+  if (n < k) {
+    return null;
+  }
+  const arr = Array.from({ length: n }, (_, i) => i);
+  for (let i = 0; i < Math.min(k, n - 1); i++) {
+    const j = Math.floor(i + Math.random() * (arr.length - i));
+    const tmp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = tmp;
+  }
+  return arr.slice(0, k);
 }
 
 /**
@@ -62,25 +69,23 @@ export function randomIndicesNoReplacement(n: number, k: number): Array<number> 
  * @returns {number}
  */
 export function rollDiceDropLowest(d: number, n: number, k: number): number {
-    const dice = Array.from({length: n},
-        (_, _i) => randRange(1, d)
-    )
-    dice.sort((a,b) => a-b)
-    let topK = dice.slice(n-k, n)
-    return topK.reduce((a,b) => a+b, 0)
+  const dice = Array.from({ length: n }, (_, _i) => randRange(1, d));
+  dice.sort((a, b) => a - b);
+  const topK = dice.slice(n - k, n);
+  return topK.reduce((a, b) => a + b, 0);
 }
 
-export function weightedRandom<T>(objects: { value: T, weight: number }[]): T {
-    const buckets = Array(objects.length+1).fill(0)
-    for (let i = 0; i < objects.length; i++) {
-        buckets[i+1] = objects[i].weight + buckets[i]
-    }
-    const value = Math.random() * buckets[objects.length]
+export function weightedRandom<T>(objects: { value: T; weight: number }[]): T {
+  const buckets = Array(objects.length + 1).fill(0);
+  for (let i = 0; i < objects.length; i++) {
+    buckets[i + 1] = objects[i].weight + buckets[i];
+  }
+  const value = Math.random() * buckets[objects.length];
 
-    for (let i = 0; i < objects.length; i++) {
-        if (buckets[i] <= value && buckets[i+1] > value) {
-            return objects[i].value
-        }
+  for (let i = 0; i < objects.length; i++) {
+    if (buckets[i] <= value && buckets[i + 1] > value) {
+      return objects[i].value;
     }
-    return objects[0].value
+  }
+  return objects[0].value;
 }

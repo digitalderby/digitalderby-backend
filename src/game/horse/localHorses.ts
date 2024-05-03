@@ -1,36 +1,38 @@
-import { HORSES_PER_RACE, HORSE_POPULATION } from "../../config/globalsettings.js";
-import { Horse, HorseSpec, generateNewHorses } from "../../models/Horse.js";
-import { randomIndicesNoReplacement } from "../../random/random.js";
-import { Race } from "../race.js";
-import { InternalHorse } from "./horse.js";
+import {
+  HORSES_PER_RACE,
+  HORSE_POPULATION,
+} from '../../config/globalsettings.js';
+import { Horse, HorseSpec, generateNewHorses } from '../../models/Horse.js';
+import { randomIndicesNoReplacement } from '../../random/random.js';
+import { Race } from '../race.js';
+import { InternalHorse } from './horse.js';
+import purge from '../../purge.js';
 
 /** Collection of horses in memory for the game server to access and manipulate */
-export let localHorses: InternalHorse[] = []
+export let localHorses: InternalHorse[] = [];
 
 export async function loadHorsesFromDatabase() {
-    console.log('Loading horses from database...')
-    const horseSpecs = await Horse.find()
+  console.log('Loading horses from database...');
+  const horseSpecs = await Horse.find();
 
-    if (horseSpecs.length !== HORSE_POPULATION) {
-        console.log('Not enough horses in database; regenerating them.')
+  if (horseSpecs.length !== HORSE_POPULATION) {
+    console.log('Not enough horses in database; regenerating them.');
 
-        // Delete all horses already in the database first
-        await Horse.deleteMany({})
+    // Delete all horses already in the database first
+    await purge();
 
-        let horses = generateNewHorses()
-            .map((h) => new Horse(h))
+    const horses = generateNewHorses().map((h) => new Horse(h));
 
-        generateLocalHorsesFromSpecs(horses)
+    generateLocalHorsesFromSpecs(horses);
 
-        await Promise.all(horses.map((hm) => hm.save()))
+    await Promise.all(horses.map((hm) => hm.save()));
 
+    console.log('Loading successful');
+    return;
+  }
 
-        console.log('Loading successful')
-        return
-    }
-
-    localHorses = horseSpecs.map((hs) => new InternalHorse(hs))
-    console.log('Loading successful')
+  localHorses = horseSpecs.map((hs) => new InternalHorse(hs));
+  console.log('Loading successful');
 }
 
 /**
@@ -40,18 +42,20 @@ export async function loadHorsesFromDatabase() {
  * @param {IHorse[]} horseSpecs - Array of horse specs from the database
  */
 export function generateLocalHorsesFromSpecs(horseSpecs: HorseSpec[]) {
-    console.log('Recreating local horse collection')
-    localHorses = horseSpecs.map((hs) => new InternalHorse(hs))
-    console.log('Finished recreating local horse collection')
+  console.log('Recreating local horse collection');
+  localHorses = horseSpecs.map((hs) => new InternalHorse(hs));
+  console.log('Finished recreating local horse collection');
 }
 
 export function createRace(): Race | null {
-    console.log('creating race')
-    let indices = randomIndicesNoReplacement(HORSE_POPULATION, HORSES_PER_RACE)
-    if (indices === null) { return null }
-    const race = new Race(indices.map((i) => localHorses[i]))
-    console.log('created race')
-    return race
+  console.log('creating race');
+  const indices = randomIndicesNoReplacement(HORSE_POPULATION, HORSES_PER_RACE);
+  if (indices === null) {
+    return null;
+  }
+  const race = new Race(indices.map((i) => localHorses[i]));
+  console.log('created race');
+  return race;
 }
 
-await loadHorsesFromDatabase()
+await loadHorsesFromDatabase();

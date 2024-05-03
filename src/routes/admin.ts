@@ -1,28 +1,19 @@
-import express from 'express'
-import { loggedInAsAdmin } from '../auth/authentication.js'
-import { 
-    createNewHorses,
-    getServerSettings,
-    startRaceAndAutostart,
-    toggleAutostart,
-    getServerStatus,
-    startRaceLoop,
-    openRaceServer,
-    closeRaceServer
-} from '../controllers/admin.js'
+import express from 'express';
+import { loggedInAsAdmin } from '../auth/authentication.js';
+import {
+  purgeHorses,
+  getServerStatus,
+  openRaceServer,
+  closeRaceServer,
+} from '../controllers/admin.js';
 
-const router = express.Router()
+const router = express.Router();
 
-router.get('/settings', loggedInAsAdmin, getServerSettings)
-router.get('/serverStatus', getServerStatus)
-router.post('/autostart', loggedInAsAdmin, toggleAutostart)
+router.get('/serverStatus', getServerStatus);
 
-router.post('/startRaceServer', loggedInAsAdmin, openRaceServer)
-router.post('/stopRaceServer', loggedInAsAdmin, closeRaceServer)
+router.post('/openServer', loggedInAsAdmin, openRaceServer);
+router.post('/closeServer', loggedInAsAdmin, closeRaceServer);
 
-router.post('/startRaceLoop', loggedInAsAdmin, startRaceLoop)
-router.post('/startRaceAndAutostart', loggedInAsAdmin, startRaceAndAutostart)
+router.post('/newHorses', loggedInAsAdmin, purgeHorses);
 
-router.post('/newHorses', loggedInAsAdmin, createNewHorses)
-
-export default router
+export default router;
