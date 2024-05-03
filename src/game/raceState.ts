@@ -196,10 +196,11 @@ export class RaceState {
         });
       }
 
-      // If the horse is between 20% and 80% done, add a random probability
-      // for the horse to obtain a carrot.
+      // If the horse is between 20% and 80% done, is not already boosting,
+      // then add a random probability for the horse to obtain a carrot.
       const boostFactor = currentPlacement + 1;
       if (
+        !trip &&
         !boost &&
         positionPercent > 0.2 &&
         positionPercent < 0.8 &&
