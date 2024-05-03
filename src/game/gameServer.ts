@@ -31,13 +31,19 @@ console.log(`Results delay: ${RESULTS_DELAY}`);
 export interface raceDetailsSchema {
   horses: {
     // Name of the horse.
-    horseName: string;
+    name: string;
     // ID of the horse.
-    horseId: string;
+    id: string;
     // Color of the horse.
-    horseColor: string;
+    color: string;
     // Icons of the horse.
-    horseIcons: string[];
+    icons: string[];
+    // Stats of the horse.
+    stats: {
+      topSpeed: number;
+      acceleration: number;
+      stamina: number;
+    };
   }[];
   // Length of the race in units.
   raceLength: number;
@@ -774,10 +780,15 @@ export class GameServer {
     const payload: raceInfoSchema = {
       race: {
         horses: this.race.horses.map((h) => ({
-          horseName: h.spec.name,
-          horseId: h.spec._id.toString(),
-          horseColor: h.spec.color,
-          horseIcons: h.spec.icons,
+          name: h.spec.name,
+          id: h.spec._id.toString(),
+          color: h.spec.color,
+          icons: h.spec.icons,
+          stats: {
+            topSpeed: h.spec.stats.topSpeed,
+            acceleration: h.spec.stats.acceleration,
+            stamina: h.spec.stats.stamina,
+          },
         })),
         raceLength: this.race.length,
         weatherConditions: this.race.weatherConditions?.name || 'Clear',
@@ -842,7 +853,7 @@ export class GameServer {
 
       // Only broadcast v2 states if we are in race mode
       if (dirty && this.raceStatus === 'race') {
-        this.broadcastStateV2(this.lag);
+        this.broadcastStateV2({ lag: this.lag });
       }
     };
 
