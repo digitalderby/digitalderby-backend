@@ -1,5 +1,5 @@
-export const deletedUsers = new Set()
+export const deletedUsers = new Set();
 
 export function markDeletedUser(username: string) {
-    deletedUsers.add(username)
+  deletedUsers.add(username);
 }
