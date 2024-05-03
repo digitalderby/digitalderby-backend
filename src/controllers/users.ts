@@ -33,31 +33,6 @@ export async function getUserByUsername(
     sendJSONError(res, 500, `Internal error retrieving user: ${error}`);
   }
 }
-// EVERYTHING ABOVE THIS LINE IS THE SAME AS BEFORE
-
-// Function to create a new user
-export async function createUser(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> {
-  try {
-    // Extract user data from request body
-    const userData = req.body;
-
-    // Create a new user instance
-    const newUser = new User(userData);
-
-    // Save the user to the database
-    await newUser.save();
-
-    // Return the newly created user in the response
-    res.status(201).json(newUser);
-  } catch (error) {
-    // Handle errors
-    sendJSONError(res, 500, `Internal error creating user: ${error}`);
-  }
-}
 
 // Function to update a user by ID
 export async function updateUser(
