@@ -4,18 +4,13 @@ import { Horse, generateNewHorses } from '../models/Horse.js'
 import { sendJSONError } from '../errorHandler.js'
 import { generateLocalHorsesFromSpecs } from '../game/horse/localHorses.js'
 
-export async function getServerSettings(req: Request, res: Response, next: NextFunction) {
-    res.status(200).json({
-        message: 'Server settings'
-    })
-}
-
 export async function getServerStatus(req: Request, res: Response, next: NextFunction) {
     res.status(200).json({ serverStatus: gameServer.serverStatus })
 }
 
 export async function openRaceServer(req: Request, res: Response, next: NextFunction) {
     gameServer.openServer()
+    gameServer.startMainLoop()
 
     res.status(200).json({ message: 'Server is now active' })
 }
@@ -27,24 +22,6 @@ export async function closeRaceServer(req: Request, res: Response, next: NextFun
     } catch (error) {
         sendJSONError(res, 500, "Could not close the server")
     }
-}
-
-export async function startRaceLoop(req: Request, res: Response, next: NextFunction) {
-    gameServer.startMainLoop()
-
-    res.status(200).json({ message: 'Server main loop has begun' })
-}
-
-export async function startRaceAndAutostart(req: Request, res: Response, next: NextFunction) {
-    res.status(200).json({
-        message: 'Server settings'
-    })
-}
-
-export async function toggleAutostart(req: Request, res: Response, next: NextFunction) {
-    res.status(200).json({
-        message: 'Server settings'
-    })
 }
 
 export async function createNewHorses(req: Request, res: Response, next: NextFunction) {
