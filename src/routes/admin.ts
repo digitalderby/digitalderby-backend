@@ -11,8 +11,8 @@ const router = express.Router()
 
 router.get('/serverStatus', getServerStatus)
 
-router.post('/startRaceServer', loggedInAsAdmin, openRaceServer)
-router.post('/stopRaceServer', loggedInAsAdmin, closeRaceServer)
+router.post('/openServer', loggedInAsAdmin, openRaceServer)
+router.post('/closeServer', loggedInAsAdmin, closeRaceServer)
 
 router.post('/newHorses', loggedInAsAdmin, createNewHorses)
 
