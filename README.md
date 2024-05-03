@@ -15,6 +15,16 @@ Backend for the Digital Derby
 | Heroku    | Platform-as-a-service used to deploy this application                           |
 
 
+## Contributors
+Will F.   [https://github.com/Fekinox](https://github.com/Fekinox)
+
+Fergus   [https://github.com/dfergusbrown](https://github.com/dfergusbrown)
+
+Adonis [https://github.com/nebstech](https://github.com/nebstech)
+
+Lando [https://github.com/vitrineofcode](https://github.com/vitrineofcode)
+
+
 ## Build Instructions
 
 Run `npm install` to install all dependencies, and then run `npm run build` to compile the TypeScript.
