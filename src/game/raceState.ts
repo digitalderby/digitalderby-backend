@@ -186,7 +186,11 @@ export class RaceState {
       // the horse trips.
       const tripFactor =
         (hs.currentSpeed - TRIP_LOW_SPEED) / (TRIP_HIGH_SPEED - TRIP_LOW_SPEED);
-      if (!trip && Math.random() < tripFactor * race.tripProbability) {
+      if (
+        !trip &&
+        !boost &&
+        Math.random() < tripFactor * race.tripProbability
+      ) {
         queuedStatusEffects.push({
           horseIdx: horseIdx,
           status: {
