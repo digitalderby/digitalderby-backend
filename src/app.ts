@@ -14,7 +14,6 @@ import AuthRouter from './routes/auth.js'
 import HorseRouter from './routes/horses.js'
 import UserRouter from './routes/users.js'
 import RaceRouter from './routes/races.js'
-import HttpInterfaceRouter from './routes/http.js'
 import bodyParser from 'body-parser'
 
 import swaggerUi from 'swagger-ui-express'
@@ -50,7 +49,6 @@ app.use('/auth', AuthRouter)
 app.use('/horses', HorseRouter)
 app.use('/users', UserRouter)
 app.use('/races', RaceRouter)
-app.use('/http', HttpInterfaceRouter)
 
 const swaggerOptions = {
     swaggerOptions: {
