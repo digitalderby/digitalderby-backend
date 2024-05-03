@@ -30,6 +30,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
         bets: [],
         wallet: DEFAULT_WALLET,
         bankruptcies: 0,
+        favoriteHorses: [],
       },
     });
 
