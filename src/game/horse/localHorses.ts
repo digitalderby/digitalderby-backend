@@ -3,6 +3,7 @@ import { Horse, HorseSpec, generateNewHorses } from "../../models/Horse.js";
 import { randomIndicesNoReplacement } from "../../random/random.js";
 import { Race } from "../race.js";
 import { InternalHorse } from "./horse.js";
+import purge from "../../purge.js";
 
 /** Collection of horses in memory for the game server to access and manipulate */
 export let localHorses: InternalHorse[] = []
@@ -15,7 +16,7 @@ export async function loadHorsesFromDatabase() {
         console.log('Not enough horses in database; regenerating them.')
 
         // Delete all horses already in the database first
-        await Horse.deleteMany({})
+        await purge()
 
         let horses = generateNewHorses()
             .map((h) => new Horse(h))

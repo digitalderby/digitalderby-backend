@@ -1,5 +1,6 @@
-import { Types } from "mongoose"
+import { Types, UpdateQuery } from "mongoose"
 import { User } from "../models/User.js"
+import { DEFAULT_WALLET } from "../config/globalsettings.js"
 
 export class BetInfo {
     username: string
@@ -11,6 +12,7 @@ export class BetInfo {
     horseId: Types.ObjectId 
     // Returns
     returns: number = 0
+    wentBankrupt: boolean = false
 
     constructor({
         username,
@@ -34,23 +36,41 @@ export class BetInfo {
 
     async commit(gameId: Types.ObjectId) {
         const difference = this.returns - this.betValue
-        console.log(`Adding ${difference} to ${this.username}'s balance`)
 
-        await User.updateOne(
-            { _id: this.id },
-            {
+        let update: any = {
+            $push: {
+                "profile.betLog": {
+                    gameId: gameId,
+                    horseId: this.horseId,
+                    betValue: this.betValue,
+                    returns: this.returns,
+                    wentBankrupt: this.wentBankrupt,
+                }
+            }
+        }
+
+        if (this.wentBankrupt) {
+            console.log(`${this.username} went bankrupt- setting their balance to ${DEFAULT_WALLET}`)
+            update = {
+                ...update,
+                "profile.wallet": DEFAULT_WALLET,
+                $inc: {
+                    "profile.bankruptcies": 1,
+                },
+            }
+        } else {
+            console.log(`Adding ${difference} to ${this.username}'s balance`)
+            update = {
+                ...update,
                 $inc: {
                     "profile.wallet": difference
                 },
-                $push: {
-                    "profile.betLog": {
-                        gameId: gameId,
-                        horseId: this.horseId,
-                        betValue: this.betValue,
-                        returns: this.returns,
-                    }
-                }
-            },
+            }
+        }
+
+        await User.updateOne(
+            { _id: this.id },
+            update
         )
 
         console.log('Successfully wrote the bet to database')

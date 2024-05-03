@@ -1,7 +1,7 @@
 import express from 'express'
 import { loggedInAsAdmin } from '../auth/authentication.js'
 import { 
-    createNewHorses,
+    purgeHorses,
     getServerStatus,
     openRaceServer,
     closeRaceServer
@@ -14,6 +14,6 @@ router.get('/serverStatus', getServerStatus)
 router.post('/openServer', loggedInAsAdmin, openRaceServer)
 router.post('/closeServer', loggedInAsAdmin, closeRaceServer)
 
-router.post('/newHorses', loggedInAsAdmin, createNewHorses)
+router.post('/newHorses', loggedInAsAdmin, purgeHorses)
 
 export default router

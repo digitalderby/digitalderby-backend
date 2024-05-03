@@ -13,8 +13,9 @@ export default async function CreateAdminUser() {
         username: 'admin',
         passwordHash: passwordHash,
         profile: {
-            betLog: [],
+            bets: [],
             wallet: DEFAULT_WALLET,
+            bankruptcies: 0,
         }
     })
 }

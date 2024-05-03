@@ -11,7 +11,7 @@ import jwt from 'jsonwebtoken'
 import { jwtSecret } from '../auth/secrets.js'
 import GameLog from '../models/GameLog.js'
 import { User, UserSpec } from '../models/User.js'
-import { BETTING_DELAY, CHEAT_MODE, HORSES_PER_RACE, MINIMUM_BET, PRERACE_DELAY, RACE_LENGTH, RESULTS_DELAY, SERVER_TICK_RATE_MS } from '../config/globalsettings.js'
+import { BETTING_DELAY, CHEAT_MODE, DEFAULT_WALLET, HORSES_PER_RACE, MINIMUM_BET, PRERACE_DELAY, RACE_LENGTH, RESULTS_DELAY, SERVER_TICK_RATE_MS } from '../config/globalsettings.js'
 import { Types } from 'mongoose'
 
 console.log(`Betting delay: ${BETTING_DELAY}`)
@@ -102,6 +102,7 @@ export interface clientStatusSchema {
         betValue: number,
         horseIdx: number,
     } | null,
+    bankruptcies: number,
 }
 
 const ServerInactiveError = {
@@ -257,7 +258,8 @@ export class GameServer {
         socket.data = { 
             username: payload.username,
             id: user._id,
-            wallet: user.profile.wallet
+            wallet: user.profile.wallet,
+            bankruptcies: user.profile.bankruptcies,
         }
 
         console.log('Successfully authenticated the socket')
@@ -392,6 +394,7 @@ export class GameServer {
             username: client.username,
             id: client.id,
             wallet: client.wallet,
+            bankruptcies: client.bankruptcies,
             bet: null
         } 
 
@@ -458,11 +461,23 @@ export class GameServer {
         // Get the end state of the race
         const lastState = this.raceStates[this.raceStates.length-1]
         for (const bet of this.bets.values()) {
+            const client = this.clients.get(bet.username)
+            if (client === undefined) { continue }
             // For each player who bet on the winning horse, pay them the total pool times the fraction they put on a given horse
             if (bet.horseIdx === lastState.rankings[0]) {
                 bet.returns = this.totalPool * Math.floor(bet.betValue / this.pool[bet.horseIdx])
             }
-            console.log(`Player ${bet.username} ${(bet.returns > 0) ? 'receives' : 'loses'} ${Math.abs(bet.returns - bet.betValue)} from their bet on horse ${bet.horseIdx+1}`)
+
+            const newBalance = client.wallet + bet.returns - bet.betValue
+            if (newBalance < MINIMUM_BET) {
+                bet.wentBankrupt = true
+            }
+
+            if (bet.wentBankrupt) {
+                console.log(`Player ${bet.username} went bankrupt- reset balance to ${DEFAULT_WALLET}`)
+            } else {
+                console.log(`Player ${bet.username} ${(bet.returns > 0) ? 'receives' : 'loses'} ${Math.abs(bet.returns - bet.betValue)} from their bet on horse ${bet.horseIdx+1}`)
+            }
         }
 
         // do persistence stuff
@@ -674,7 +689,12 @@ export class GameServer {
                 // Update local wallet for each connected client
                 const client = this.clients.get(user)
                 if (client) {
-                    client.wallet += bet.returns - bet.betValue
+                    if (bet.wentBankrupt) {
+                        client.wallet = DEFAULT_WALLET
+                        client.bankruptcies += 1
+                    } else {
+                        client.wallet += bet.returns - bet.betValue
+                    }
                     this.emitClientStatus(client)
                 }
                 await bet.commit(game._id) 
