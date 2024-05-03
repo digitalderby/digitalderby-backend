@@ -16,3 +16,5 @@ export const applySpeedBoost: Powerup = (horse, race, boostAmount = 5) => { // D
 export const applyStaminaBoost: Powerup = (horse, race, boostAmount = 10) => { // Default boost amount is 10
   horse.stamina += boostAmount; // Directly increase stamina
 };
+
+// Functions are not importted in any file
