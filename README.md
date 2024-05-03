@@ -16,13 +16,21 @@ Backend for the Digital Derby
 
 
 ## Contributors
-Will F.   [https://github.com/Fekinox](https://github.com/Fekinox)
+Will F. 
 
-Fergus   [https://github.com/dfergusbrown](https://github.com/dfergusbrown)
+[https://github.com/Fekinox](https://github.com/Fekinox)
 
-Adonis [https://github.com/nebstech](https://github.com/nebstech)
+Fergus  
 
-Lando [https://github.com/vitrineofcode](https://github.com/vitrineofcode)
+[https://github.com/dfergusbrown](https://github.com/dfergusbrown)
+
+Adonis 
+
+[https://github.com/nebstech](https://github.com/nebstech)
+
+Lando 
+
+[https://github.com/vitrineofcode](https://github.com/vitrineofcode)
 
 
 ## Build Instructions
