@@ -39,6 +39,18 @@ const secondNames = [
   'Silver',
   'Gold',
   'Lightning',
+
+  'Will',
+  'Lando',
+  'Fergus',
+  'Adonis',
+  'Addy',
+  'Josh',
+  'Erika',
+  'Alexa',
+  'Ian',
+  'Aris',
+  'JP',
 ];
 
 const colors = [
@@ -55,6 +67,32 @@ const colors = [
   'Gold',
   'Ebony',
   'Ivory',
+];
+
+const firstIcons = ['✨', '🔥', '💨', '☄️', '💦', '💕', '🫧'];
+
+const secondIcons = [
+  '⭐',
+  '🌟',
+  '🌩️',
+  '⚡',
+  '💡',
+  '⚙️',
+  '🤖',
+  '👽',
+  '👾',
+  '🚀',
+  '💰',
+  '💥',
+  '☢️',
+  '💯',
+  '🕶️',
+  '☀️',
+  '🪐',
+  '🍔',
+  '🦁',
+  '🎲',
+  '❤️',
 ];
 
 interface IHorseStats {
@@ -90,6 +128,7 @@ const horseSchema = new mongoose.Schema<IHorse>(
     name: {
       type: String,
       required: true,
+      unique: true,
     },
     icons: [
       {
@@ -109,13 +148,53 @@ const horseSchema = new mongoose.Schema<IHorse>(
 );
 
 export function generateNewHorses(): IHorse[] {
-  return Array.from({ length: HORSE_POPULATION }, (_, i) => {
+  // Generate names and icon lists, ensuring that they are both unique
+  const icons: string[][] = [];
+  const names: string[] = [];
+
+  while (icons.length < HORSE_POPULATION) {
+    let newIcon = [secondIcons[randRange(0, secondIcons.length - 1)]];
+    if (Math.random() < 1 / 8) {
+      newIcon = [firstIcons[randRange(0, firstIcons.length - 1)], ...newIcon];
+    }
+
+    if (
+      icons.some((ic) => {
+        if (ic.length !== newIcon.length) {
+          return false;
+        }
+
+        for (let j = 0; j < ic.length; j++) {
+          if (ic[j] !== newIcon[j]) {
+            return false;
+          }
+        }
+
+        return true;
+      })
+    ) {
+      continue;
+    }
+
+    icons.push(newIcon);
+  }
+
+  while (names.length < HORSE_POPULATION) {
     const randomFirstName = firstNames[randRange(0, firstNames.length - 1)];
     const randomSecondName = secondNames[randRange(0, secondNames.length - 1)];
+    const name = `${randomFirstName} ${randomSecondName}`;
+
+    if (names.includes(name)) {
+      continue;
+    }
+    names.push(name);
+  }
+
+  return Array.from({ length: HORSE_POPULATION }, (_, i) => {
     const randomColor = colors[randRange(0, colors.length - 1)];
     return {
-      name: `${randomFirstName} ${randomSecondName}`,
-      icons: ['🐎'],
+      name: names[i],
+      icons: [...icons[i], '🐎'],
       color: randomColor,
       stats: {
         topSpeed: rollDiceDropLowest(6, 4, 3),
