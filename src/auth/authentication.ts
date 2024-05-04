@@ -31,6 +31,17 @@ export async function loggedInAsUser(
       return sendJSONError(res, 400, `Could not parse JWT: ${error}`);
     }
 
+    if (
+      typeof payload.username !== 'string' ||
+      typeof payload.isAdmin !== 'boolean'
+    ) {
+      return sendJSONError(
+        res,
+        400,
+        `JWT is missing either the username or admin status`,
+      );
+    }
+
     req.body.jwtPayload = {
       username: payload.username,
       isAdmin: payload.isAdmin,
@@ -67,6 +78,17 @@ export async function loggedInAsAdmin(
       payload = p;
     } catch (error) {
       return sendJSONError(res, 400, `Could not parse JWT: ${error}`);
+    }
+
+    if (
+      typeof payload.username !== 'string' ||
+      typeof payload.isAdmin !== 'boolean'
+    ) {
+      return sendJSONError(
+        res,
+        400,
+        `JWT is missing either the username or admin status`,
+      );
     }
 
     if (payload.isAdmin === true) {
