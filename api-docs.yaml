@@ -129,6 +129,7 @@ paths:
   /admin/serverStatus:
     get:
       summary: Get current server status
+      description: Returns whether the game server is currently closed (not accepting connections), inactive (accepting connections, but not running the simulation) or active (accepting connections and running the simulation).
       tags: [Admin Tools]
       responses:
         "200":
@@ -144,6 +145,7 @@ paths:
   /admin/newHorses:
     post:
       summary: Generate a new population of horses
+      description: Deletes all the horses in the database (as well as any bets placed on those horses and any games involving those horses) and generates a new population of horses.
       tags: [Admin Tools]
       parameters:
         - $ref: '#/components/parameters/adminToken'
@@ -158,8 +160,9 @@ paths:
           description: 'Internal error'
   /admin/openServer:
     post:
-      summary: Creates a new Socket.IO server and disconnects all old clients
+      summary: Open the server and start the simulation
       tags: [Admin Tools]
+      description: Initializes the Socket.IO server, begins the simulation, and starts accepting connections.
       parameters:
         - $ref: '#/components/parameters/adminToken'
       responses:
@@ -174,6 +177,7 @@ paths:
   /admin/closeServer:
     post:
       summary: Closes the Socket.IO server
+      description: Stops the simulation, disconnects all clients, and stops accepting connections.
       tags: [Admin Tools]
       parameters:
         - $ref: '#/components/parameters/adminToken'
@@ -189,6 +193,7 @@ paths:
   /auth/login:
     post:
       summary: Log in as a user
+      description: Log in, retrieving a JWT you can use to connect to the server or use any of the protected routes.
       tags: [Authentication]
       responses:
         "200":
@@ -209,6 +214,7 @@ paths:
   /auth/signup:
     post:
       summary: Sign up for a new account
+      description: Create a new account providing a username and password, and retrieve a JWT you can use to connect to the server.
       tags: [Authentication]
       responses:
         "200":
@@ -229,6 +235,7 @@ paths:
   /auth/deleteAccount:
     delete:
       summary: Delete the user's account
+      description: Deletes the currently logged-in user's account.
       tags: [Authentication]
       responses:
         "200":
@@ -241,7 +248,8 @@ paths:
           description: 'Internal error'
   /horses:
     get:
-      summary: Get all historical horse data
+      summary: Get all horse data
+      description: Retrieves all the horses from the database.
       tags: [Horse Data]
       responses:
         "200":
@@ -256,7 +264,8 @@ paths:
           description: 'Internal error'
   /horses/{id}:
     get:
-      summary: Get a specific horse by name
+      summary: Get a specific horse by ID
+      description: Get a specific horse by their horse ID.
       tags: [Horse Data]
       parameters:
         - $ref: '#/components/parameters/horseId'
@@ -273,7 +282,8 @@ paths:
           description: 'Internal error'
   /horses/{id}/lastGames:
     get:
-      summary: Get the horse's previous games played
+      summary: Get the specific horse's last games played
+      description: Get all of the horse's previous games, most recent first.
       tags: [Horse Data]
       parameters:
         - $ref: '#/components/parameters/horseId'
@@ -285,6 +295,7 @@ paths:
   /races:
     get:
       summary: Get all historical race data
+      description: Get all the most recent races, most recent ones first.
       tags: [Race Data]
       responses:
         "200":
@@ -298,6 +309,7 @@ paths:
   /races/lastGame:
     get:
       summary: Get the game log for the most recent game
+      description: Get the most recently completed race.
       tags: [Race Data]
       responses:
         "200":
@@ -309,6 +321,7 @@ paths:
   /races/{id}:
     get:
       summary: Get a specific game by id
+      description: Get a specific race by it's ID.
       tags: [Race Data]
       responses:
         "200":
@@ -320,6 +333,7 @@ paths:
   /races/{id}/horses:
     get:
       summary: Get all the details for all the horses in a specific race
+      description: Get all the horses who participated in a specific race.
       tags: [Race Data]
       responses:
         "200":
@@ -333,6 +347,7 @@ paths:
   /users:
     get:
       summary: Get all registered users' username
+      description: Get the usernames of all registered users.
       tags: [User Data]
       responses:
         "200":
@@ -350,7 +365,8 @@ paths:
                   - baz
   /users/{username}:
     get:
-      summary: Get a specific user profile by id
+      summary: Get a specific user profile by username
+      description: Get a specific user's profile by their username.
       tags: [User Data]
       parameters:
         - $ref: '#/components/parameters/username'
@@ -365,6 +381,7 @@ paths:
           description: 'Not found'
     delete:
       summary: Delete a user's account
+      description: As an admin, delete a user's account
       tags: [User Data]
       parameters:
         - $ref: '#/components/parameters/username'
@@ -378,4 +395,56 @@ paths:
           description: 'Unauthorized: not logged in as the admin user'
         "500":
           description: 'Internal error'
-
+  /users/{username}/favoriteHorses:
+    get:
+      summary: Get a user's favorite horses
+      description: Get the list of the user's favorite horses
+      tags: [User Data]
+      parameters:
+        - $ref: '#/components/parameters/username'
+      responses:
+        "200":
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/horseProfile'
+        "401":
+          description: 'Unauthorized'
+        "404":
+          description: 'Not found'
+        "500":
+          description: 'Internal error'
+    post:
+      summary: Add a horse to the user's favorites
+      description: Get the list of the user's favorite horses
+      tags: [User Data]
+      parameters:
+        - $ref: '#/components/parameters/username'
+        - $ref: '#/components/parameters/userToken'
+      responses:
+        "201":
+          description: 'Created'
+        "401":
+          description: 'Unauthorized'
+        "404":
+          description: 'Not found'
+        "500":
+          description: 'Internal error'
+  /users/{username}/favoriteHorses/{horseId}:
+    delete:
+      tags: [User Data]
+      parameters:
+        - $ref: '#/components/parameters/username'
+        - $ref: '#/components/parameters/userToken'
+      responses:
+        "200":
+          description: 'OK'
+        "401":
+          description: 'Unauthorized'
+        "404":
+          description: 'Not found'
+        "500":
+          description: 'Internal error'
