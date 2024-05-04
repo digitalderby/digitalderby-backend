@@ -7,7 +7,7 @@ export async function getAllHorses(req: Request, res: Response) {
     const horses = await Horse.find({}).lean();
     res.status(200).json(horses);
   } catch (error) {
-    sendJSONError(res, 500, `Internal error retrieving users: ${error}`);
+    sendJSONError(res, 500, `Internal error retrieving horses: ${error}`);
   }
 }
 

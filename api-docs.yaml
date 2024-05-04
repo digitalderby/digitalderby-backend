@@ -48,6 +48,17 @@ components:
           type: string
         stats:
           type: object
+      example:
+        name: Cool Horse
+        icons:
+          - horse
+          - sparkle
+          - fire
+        color: Gold
+        stats:
+          topSpeed: 10
+          stamina: 10
+          acceleration: 10
   parameters:
     username:
       name: Username
@@ -93,40 +104,128 @@ paths:
     get:
       summary: Get current server status
       tags: [Admin Tools]
+      responses:
+        "200":
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  serverStatus: "closed | inactive | active"
+        "500":
+          description: 'Internal error'
   /admin/newHorses:
     post:
       summary: Generate a new population of horses
       tags: [Admin Tools]
       parameters:
         - $ref: '#/components/parameters/adminToken'
+      responses:
+        "200":
+          description: 'OK'
+        "400":
+          description: 'Bad request: malformed or expired JWT, no JWT in the authorization headers, etc.'
+        "401":
+          description: 'Unauthorized: not logged in as the admin user'
+        "500":
+          description: 'Internal error'
   /admin/openServer:
     post:
       summary: Creates a new Socket.IO server and disconnects all old clients
       tags: [Admin Tools]
       parameters:
         - $ref: '#/components/parameters/adminToken'
+      responses:
+        "200":
+          description: 'OK'
+        "400":
+          description: 'Bad request: malformed or expired JWT, no JWT in the authorization headers, etc.'
+        "401":
+          description: 'Unauthorized: not logged in as the admin user'
+        "500":
+          description: 'Internal error'
   /admin/closeServer:
     post:
       summary: Closes the Socket.IO server
       tags: [Admin Tools]
       parameters:
         - $ref: '#/components/parameters/adminToken'
+      responses:
+        "200":
+          description: 'OK'
+        "400":
+          description: 'Bad request: malformed or expired JWT, no JWT in the authorization headers, etc.'
+        "401":
+          description: 'Unauthorized: not logged in as the admin user'
+        "500":
+          description: 'Internal error'
   /auth/login:
     post:
       summary: Log in as a user
       tags: [Authentication]
+      responses:
+        "200":
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Successfully logged in as user (username)'
+                  token: '< login JWT >'
+        "400":
+          description: 'Password does not match'
+        "404":
+          description: 'User does not exist'
+        "500":
+          description: 'Internal error'
   /auth/signup:
     post:
       summary: Sign up for a new account
       tags: [Authentication]
+      responses:
+        "200":
+          description: 'Created'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Successfully created user (username)'
+                  token: '< login JWT >'
+        "400":
+          description: 'Password does not match'
+        "404":
+          description: 'User does not exist'
+        "500":
+          description: 'Internal error'
   /auth/deleteAccount:
     delete:
       summary: Delete the user's account
       tags: [Authentication]
+      responses:
+        "200":
+          description: 'OK'
+        "400":
+          description: 'Bad request: malformed or expired JWT, no JWT in the authorization headers, etc.'
+        "401":
+          description: 'Unauthorized: not logged in as a user'
+        "500":
+          description: 'Internal error'
   /horses:
     get:
       summary: Get all historical horse data
       tags: [Horse Data]
+      responses:
+        "200":
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/horseProfile'
   /horses/{id}:
     get:
       summary: Get a specific horse by name
@@ -200,11 +299,10 @@ paths:
       responses:
         "200":
           description: 'OK'
+        "400":
+          description: 'Bad request: malformed or expired JWT, no JWT in the authorization headers, etc.'
         "401":
-          description: 'Unauthorized'
-          content:
-            application/json:
-              schema:
-                type: string
-                example:
-                  message: 'Must be logged in as the admin to perform this action'
+          description: 'Unauthorized: not logged in as the admin user'
+        "500":
+          description: 'Internal error'
+
