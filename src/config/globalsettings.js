@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AUTOSTART = exports.RACE_LENGTH = exports.CHEAT_MODE = exports.RESULTS_DELAY = exports.PRERACE_DELAY = exports.BETTING_DELAY = exports.DEFAULT_WALLET = exports.MINIMUM_BET = exports.HORSES_PER_RACE = exports.HORSE_POPULATION = exports.SERVER_TICK_RATE_MS = void 0;
+exports.SERVER_TICK_RATE_MS = Number(process.env.SERVER_TICK_RATE_MS) || 100;
+exports.HORSE_POPULATION = Number(process.env.HORSE_POPULATION) || 100;
+exports.HORSES_PER_RACE = Number(process.env.HORSES_PER_RACE) || 4;
+exports.MINIMUM_BET = Number(process.env.MINIMUM_BET) || 10;
+exports.DEFAULT_WALLET = Number(process.env.DEFAULT_WALLET) || 100;
+exports.BETTING_DELAY = Number(process.env.BETTING_DELAY) || 10;
+exports.PRERACE_DELAY = Number(process.env.PRERACE_DELAY) || 3;
+exports.RESULTS_DELAY = Number(process.env.RESULTS_DELAY) || 10;
+exports.CHEAT_MODE = process.env.CHEAT_MODE === 'enabled';
+exports.RACE_LENGTH = Number(process.env.RACE_LENGTH) || 10000;
+exports.AUTOSTART = process.env.AUTOSTART === 'enabled';
