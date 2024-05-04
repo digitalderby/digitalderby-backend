@@ -95,6 +95,8 @@ const secondIcons = [
   '❤️',
 ];
 
+const horseIcons = ['🐴', '🦓', '🦄'];
+
 interface IHorseStats {
   topSpeed: number;
   stamina: number;
@@ -158,6 +160,15 @@ export function generateNewHorses(): IHorse[] {
       newIcon = [firstIcons[randRange(0, firstIcons.length - 1)], ...newIcon];
     }
 
+    const horseCoin = Math.random();
+    if (horseCoin < 1 / 20) {
+      newIcon = [...newIcon, horseIcons[1]];
+    } else if (horseCoin < 2 / 20) {
+      newIcon = [...newIcon, horseIcons[2]];
+    } else {
+      newIcon = [...newIcon, horseIcons[0]];
+    }
+
     if (
       icons.some((ic) => {
         if (ic.length !== newIcon.length) {
@@ -194,7 +205,7 @@ export function generateNewHorses(): IHorse[] {
     const randomColor = colors[randRange(0, colors.length - 1)];
     return {
       name: names[i],
-      icons: [...icons[i], '🐎'],
+      icons: icons[i],
       color: randomColor,
       stats: {
         topSpeed: rollDiceDropLowest(6, 4, 3),
