@@ -1,5 +1,10 @@
 import express from 'express';
-import { getAllRaces, getHorsesInRace, getLastRace, getRaceById } from '../controllers/races.js';
+import {
+  getAllRaces,
+  getHorsesInRace,
+  getLastRace,
+  getRaceById,
+} from '../controllers/races.js';
 
 const router = express.Router();
 

@@ -26,9 +26,10 @@ export async function getHorseById(req: Request, res: Response) {
 
 export async function getHorsesLastGames(req: Request, res: Response) {
   try {
-    const games = await GameLog.find({ horses: req.params.id }).populate(
-      'horses',
-    );
+    const games = await GameLog.find({ horses: req.params.id })
+      .populate('horses')
+      .sort({ createdAt: 'desc' });
+
     if (!games) {
       return sendJSONError(res, 404, `Could not find games`);
     }
