@@ -4,19 +4,39 @@ info:
   version: 0.0.0
 components:
   schemas:
+    gameLog:
+      name: Game Log
+      description: A recorded game
+      type: object
+      properties:
+        horses:
+          type: array
+          items:
+            $ref: '#/components/schemas/horseProfile'
+        rankings:
+          type: array
+          items:
+            type: number
+          example:
+            - 0
+            - 2
+            - 1
+            - 3
     bet:
       name: Bet
       description: A bet placed on a certain game and a certain horse
       type: object
       properties:
         gameId:
-          type: string
+          $ref: '#/components/schemas/gameLog'
         horseId:
-          type: string
+          $ref: '#/components/schemas/horseProfile'
         betValue:
           type: integer
         returns:
           type: integer
+        wentBankrupt:
+          type: bool
     userProfile:
       name: User Profile
       description: A user, their current wallet balance, and their past betting history
@@ -29,10 +49,16 @@ components:
           properties:
             wallet:
               type: integer
+            bankruptcies:
+              type: integer
             betLog:
               type: array
               items:
                 $ref: '#/components/schemas/bet'
+            favoriteHorses:
+              type: array
+              items:
+                $ref: '#/components/schemas/horseProfile'
     horseProfile:
       name: HorseProfile
       description: A horse and their stats
@@ -226,6 +252,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/horseProfile'
+        "500":
+          description: 'Internal error'
   /horses/{id}:
     get:
       summary: Get a specific horse by name
@@ -241,6 +269,8 @@ paths:
                 $ref: '#/components/schemas/horseProfile'
         "404":
           description: 'Not found'
+        "500":
+          description: 'Internal error'
   /horses/{id}/lastGames:
     get:
       summary: Get the horse's previous games played
@@ -250,32 +280,74 @@ paths:
       responses:
         "200":
           description: 'OK'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/horseProfile'
         "404":
           description: 'Not found'
   /races:
     get:
       summary: Get all historical race data
       tags: [Race Data]
+      responses:
+        "200":
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/gameLog'
   /races/lastGame:
     get:
       summary: Get the game log for the most recent game
       tags: [Race Data]
+      responses:
+        "200":
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gameLog'
   /races/{id}:
     get:
       summary: Get a specific game by id
       tags: [Race Data]
+      responses:
+        "200":
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gameLog'
   /races/{id}/horses:
     get:
       summary: Get all the details for all the horses in a specific race
       tags: [Race Data]
+      responses:
+        "200":
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/horseProfile'
   /users:
     get:
       summary: Get all registered users' username
       tags: [User Data]
+      responses:
+        "200":
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                example:
+                  - foo
+                  - bar
+                  - admin
+                  - baz
   /users/{username}:
     get:
       summary: Get a specific user profile by id
@@ -295,7 +367,8 @@ paths:
       summary: Delete a user's account
       tags: [User Data]
       parameters:
-        - $ref: '$/components/parameters/adminToken'
+        - $ref: '#/components/parameters/username'
+        - $ref: '#/components/parameters/adminToken'
       responses:
         "200":
           description: 'OK'

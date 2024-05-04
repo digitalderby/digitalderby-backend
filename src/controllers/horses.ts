@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Horse } from '../models/Horse.js';
 import { sendJSONError } from '../errorHandler.js';
+import GameLog from '../models/GameLog.js';
 
 export async function getAllHorses(req: Request, res: Response) {
   try {
@@ -24,7 +25,15 @@ export async function getHorseById(req: Request, res: Response) {
 }
 
 export async function getHorsesLastGames(req: Request, res: Response) {
-  res.status(200).json({
-    message: 'Server settings',
-  });
+  try {
+    const games = await GameLog.find({ horses: req.params.id }).populate(
+      'horses',
+    );
+    if (!games) {
+      return sendJSONError(res, 404, `Could not find games`);
+    }
+    res.status(200).json(games);
+  } catch (error) {
+    sendJSONError(res, 500, `Internal error retrieving games: ${error}`);
+  }
 }
