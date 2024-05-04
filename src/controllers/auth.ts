@@ -93,7 +93,7 @@ export async function deleteLoggedInUser(
 
     // Cannot delete the admin
     if (req.body.jwtPayload.username === 'admin') {
-      return sendJSONError(res, 409, 'Cannot delete admin user');
+      return sendJSONError(res, 400, 'Cannot delete admin user');
     }
 
     const user = await User.findOne(userToDelete);
