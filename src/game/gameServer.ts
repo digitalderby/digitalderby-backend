@@ -196,8 +196,6 @@ export class GameServer {
     this.io.of('/user').on('connection', (sk) => this.userHandler(sk));
 
     console.log('Server successfully created');
-
-    this.openServer();
   }
 
   openServer() {

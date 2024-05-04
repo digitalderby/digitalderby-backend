@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { jwtSecret } from './secrets.js';
+import { sendJSONError } from '../errorHandler.js';
 
 // Get the admin password from the environment and hash it
 export async function loggedInAsUser(
@@ -11,19 +12,33 @@ export async function loggedInAsUser(
   try {
     let token = req.get('Authorization') || req.query.token || req.body.token;
     if (!token) {
-      throw 'Not Logged In';
+      return sendJSONError(
+        res,
+        401,
+        'Must provide a JWT in the Authorization header',
+      );
     }
     token = token.replace('Bearer ', '');
 
-    const payload = jwt.verify(token, jwtSecret);
-    if (typeof payload === 'string') {
-      return res.status(400).json('Could not parse token');
+    let payload: jwt.JwtPayload;
+    try {
+      const p = jwt.verify(token, jwtSecret);
+      if (typeof p === 'string') {
+        return sendJSONError(res, 400, 'Could not parse JWT');
+      }
+      payload = p;
+    } catch (error) {
+      return sendJSONError(res, 400, `Could not parse JWT: ${error}`);
     }
 
-    req.body.jwtPayload = payload;
+    req.body.jwtPayload = {
+      username: payload.username,
+      isAdmin: payload.isAdmin,
+    };
+
     next();
   } catch (error) {
-    res.status(401).json('Must be logged in to perform this action');
+    sendJSONError(res, 500, `Could not verify user credentials: ${error}`);
   }
 }
 
@@ -35,23 +50,38 @@ export async function loggedInAsAdmin(
   try {
     let token = req.get('Authorization') || req.query.token || req.body.token;
     if (!token) {
-      throw 'Not Logged In';
+      return sendJSONError(
+        res,
+        401,
+        'Must provide a JWT in the Authorization header',
+      );
     }
     token = token.replace('Bearer ', '');
 
-    const payload = jwt.verify(token, jwtSecret || 'secret');
-    if (typeof payload === 'string') {
-      return res.status(401).json('Could not parse token');
+    let payload: jwt.JwtPayload;
+    try {
+      const p = jwt.verify(token, jwtSecret);
+      if (typeof p === 'string') {
+        return sendJSONError(res, 400, 'Could not parse JWT');
+      }
+      payload = p;
+    } catch (error) {
+      return sendJSONError(res, 400, `Could not parse JWT: ${error}`);
     }
+
     if (payload.isAdmin === true) {
       req.body.isAdmin = true;
     } else {
-      return res.status(401).json('Ill-formed token');
+      return sendJSONError(res, 400, 'JWT is not an admin user');
     }
+
+    req.body.jwtPayload = {
+      username: payload.username,
+      isAdmin: payload.isAdmin,
+    };
+
     next();
   } catch (error) {
-    res
-      .status(401)
-      .json('Must be logged in as the admin to perform this action');
+    sendJSONError(res, 500, `Could not verify admin credentials: ${error}`);
   }
 }

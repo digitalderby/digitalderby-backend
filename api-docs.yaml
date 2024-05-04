@@ -61,7 +61,7 @@ components:
       type: string
     adminToken:
       name: Admin Token
-      description: JWT token to authorize a client as an admin.
+      description: JWT obtained when a user logs in as the user 'admin'.
       in: header
       required: true
       schema:
@@ -70,7 +70,7 @@ components:
           Bearer <adminToken>
     userToken:
       name: User Token
-      description: JWT token to authorize a client as a specific user.
+      description: JWT to authorize a client as a specific user.
       in: header
       required: true
       schema:
@@ -88,66 +88,26 @@ tags:
     description: Endpoints for accessing historical race data
   - name: User Data
     description: Endpoints for accessing user information
-  - name: HTTP Interface
-    description: An HTTP interface that can be used to manipulate the server as an alternative to Socket.IO
 paths:
-  /admin/login:
-    post:
-      summary: Log in as an admin
-      tags: [Admin Tools]
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - password
-              properties:
-                password:
-                  type: string
-              example:
-                password: someAdminPassword
-  /admin/settings:
-    get:
-      summary: Get current server configuration
-      tags: [Admin Tools]
   /admin/serverStatus:
     get:
       summary: Get current server status
       tags: [Admin Tools]
-  /admin/autostart:
-    post:
-      summary: Enable/disable automatically starting a new race once one ends
-      tags: [Admin Tools]
-      parameters:
-        - $ref: '#/components/parameters/adminToken'
   /admin/newHorses:
     post:
       summary: Generate a new population of horses
       tags: [Admin Tools]
       parameters:
         - $ref: '#/components/parameters/adminToken'
-  /admin/startRaceServer:
+  /admin/openServer:
     post:
       summary: Creates a new Socket.IO server and disconnects all old clients
       tags: [Admin Tools]
       parameters:
         - $ref: '#/components/parameters/adminToken'
-  /admin/stopRaceServer:
+  /admin/closeServer:
     post:
       summary: Closes the Socket.IO server
-      tags: [Admin Tools]
-      parameters:
-        - $ref: '#/components/parameters/adminToken'
-  /admin/startRaceLoop:
-    post:
-      summary: Starts the race simulation
-      tags: [Admin Tools]
-      parameters:
-        - $ref: '#/components/parameters/adminToken'
-  /admin/startRaceAndAutostart:
-    post:
-      summary: Starts the race simulation and automatically starts a new race once one ends
       tags: [Admin Tools]
       parameters:
         - $ref: '#/components/parameters/adminToken'
@@ -159,6 +119,10 @@ paths:
     post:
       summary: Sign up for a new account
       tags: [Authentication]
+  /auth/deleteAccount:
+    delete:
+      summary: Delete the user's account
+      tags: [Authentication]
   /horses:
     get:
       summary: Get all historical horse data
@@ -166,6 +130,21 @@ paths:
   /horses/{id}:
     get:
       summary: Get a specific horse by name
+      tags: [Horse Data]
+      parameters:
+        - $ref: '#/components/parameters/horseId'
+      responses:
+        "200":
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/horseProfile'
+        "404":
+          description: 'Not found'
+  /horses/{id}/lastGames:
+    get:
+      summary: Get the horse's previous games played
       tags: [Horse Data]
       parameters:
         - $ref: '#/components/parameters/horseId'
@@ -190,13 +169,13 @@ paths:
     get:
       summary: Get a specific game by id
       tags: [Race Data]
-  /races/{id}:
+  /races/{id}/horses:
     get:
       summary: Get all the details for all the horses in a specific race
       tags: [Race Data]
   /users:
     get:
-      summary: Get all registered users
+      summary: Get all registered users' username
       tags: [User Data]
   /users/{username}:
     get:
@@ -213,30 +192,19 @@ paths:
                 $ref: '#/components/schemas/userProfile'
         "404":
           description: 'Not found'
-  /http/currentGame:
-    get:
-      summary: Get the current game status, if a game is running
-      tags: [HTTP Interface]
-  /http/wallet:
-    get:
-      summary: Get your current wallet balance
-      tags: [HTTP Interface]
-      parameters:
-        - $ref: '#/components/parameters/userToken'
-  /http/currentGame/bet:
-    get:
-      summary: Get the current value of your bet
-      tags: [HTTP Interface]
-      parameters:
-        - $ref: '#/components/parameters/userToken'
-    put:
-      summary: Change the current value of your bet
-      tags: [HTTP Interface]
-      parameters:
-        - $ref: '#/components/parameters/userToken'
     delete:
-      summary: Clear your current bet
-      tags: [HTTP Interface]
+      summary: Delete a user's account
+      tags: [User Data]
       parameters:
-        - $ref: '#/components/parameters/userToken'
-      
+        - $ref: '$/components/parameters/adminToken'
+      responses:
+        "200":
+          description: 'OK'
+        "401":
+          description: 'Unauthorized'
+          content:
+            application/json:
+              schema:
+                type: string
+                example:
+                  message: 'Must be logged in as the admin to perform this action'
