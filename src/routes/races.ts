@@ -1,11 +1,16 @@
 import express from 'express';
-import dummyRouter from '../dummyHandler.js';
+import {
+  getAllRaces,
+  getHorsesInRace,
+  getLastRace,
+  getRaceById,
+} from '../controllers/races.js';
 
 const router = express.Router();
 
-router.get('/', dummyRouter);
-router.get('/lastGame', dummyRouter);
-router.get('/:id', dummyRouter);
-router.get('/:id/horses', dummyRouter);
+router.get('/', getAllRaces);
+router.get('/lastGame', getLastRace);
+router.get('/:id', getRaceById);
+router.get('/:id/horses', getHorsesInRace);
 
 export default router;

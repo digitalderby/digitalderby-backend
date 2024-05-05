@@ -1,5 +1,4 @@
 import express from 'express';
-import dummyRouter from '../dummyHandler.js';
 import { loggedInAsUser } from '../auth/authentication.js';
 import {
   deleteLoggedInUser,
