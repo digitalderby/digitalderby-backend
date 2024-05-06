@@ -66,6 +66,7 @@ await CreateAdminUser();
 gameServer.createServer(server);
 
 if (AUTOSTART) {
+  gameServer.openServer();
   gameServer.startMainLoop();
 }
 
