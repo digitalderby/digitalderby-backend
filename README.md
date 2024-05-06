@@ -84,3 +84,4 @@ Access the API documentation after starting the server by accessing the `/api-do
 ## Future Enhancements
 - Adding sound effects for the race game.
 - Implementing UI for the weather effects 
+
