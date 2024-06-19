@@ -857,7 +857,7 @@ export class GameServer {
 
     console.log('Starting main loop');
 
-    runner();
+    // runner();
   }
 
   stopMainLoop() {
